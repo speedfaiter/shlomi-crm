@@ -7,7 +7,7 @@ import {
   WAListMessage,
 } from "@/lib/chatbot";
 
-// âââ WhatsApp Cloud API Webhook â Interactive Messages âââââââââââââââ
+// ─── WhatsApp Cloud API Webhook — Interactive Messages ───────────────
 //
 // Supports:
 // - Text messages
@@ -19,7 +19,7 @@ import {
 
 const GRAPH_API = "https://graph.facebook.com/v18.0";
 
-// âââ GET: Verification Challenge âââââââââââââââââââââââââââââââââââââ
+// ─── GET: Verification Challenge ─────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
-// âââ POST: Incoming Messages âââââââââââââââââââââââââââââââââââââââââ
+// ─── POST: Incoming Messages ─────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// âââ Extract Text from Any Message Type ââââââââââââââââââââââââââââââ
+// ─── Extract Text from Any Message Type ──────────────────────────────
 
 function extractMessageText(msg: any): string {
   switch (msg.type) {
@@ -118,7 +118,7 @@ function extractMessageText(msg: any): string {
       // Template quick reply button
       return msg.button?.text || msg.button?.payload || "";
 
-    // Images, audio, etc. â treat as "need help"
+    // Images, audio, etc. — treat as "need help"
     case "image":
     case "audio":
     case "video":
@@ -133,7 +133,7 @@ function extractMessageText(msg: any): string {
   }
 }
 
-// âââ Send Message (Text / Buttons / List) ââââââââââââââââââââââââââââ
+// ─── Send Message (Text / Buttons / List) ────────────────────────────
 
 async function sendMessage(phoneNumberId: string, to: string, msg: BotMessage) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -185,7 +185,7 @@ async function sendMessage(phoneNumberId: string, to: string, msg: BotMessage) {
   }
 }
 
-// âââ Build Interactive Button Payload ââââââââââââââââââââââââââââââââ
+// ─── Build Interactive Button Payload ────────────────────────────────
 
 function buildButtonPayload(to: string, msg: WAButtonMessage) {
   return {
@@ -210,7 +210,7 @@ function buildButtonPayload(to: string, msg: WAButtonMessage) {
   };
 }
 
-// âââ Build Interactive List Payload ââââââââââââââââââââââââââââââââââ
+// ─── Build Interactive List Payload ──────────────────────────────────
 
 function buildListPayload(to: string, msg: WAListMessage) {
   return {
@@ -237,7 +237,7 @@ function buildListPayload(to: string, msg: WAListMessage) {
   };
 }
 
-// âââ Mark Message as Read ââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Mark Message as Read ────────────────────────────────────────────
 
 async function markAsRead(phoneNumberId: string, messageId: string) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -261,7 +261,7 @@ async function markAsRead(phoneNumberId: string, messageId: string) {
   }
 }
 
-// âââ Typing Indicator ââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Typing Indicator ────────────────────────────────────────────────
 
 async function sendTypingIndicator(phoneNumberId: string, to: string) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -283,6 +283,6 @@ async function sendTypingIndicator(phoneNumberId: string, to: string) {
       }),
     });
   } catch {
-    // Best effort â typing indicator is optional
+    // Best effort — typing indicator is optional
   }
 }
