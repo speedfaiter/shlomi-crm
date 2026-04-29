@@ -1,4 +1,4 @@
-// âââ Chatbot Engine v2 â Interactive Buttons & Lists âââââââââââââââââ
+// ─── Chatbot Engine v2 — Interactive Buttons & Lists ─────────────────
 // Returns structured WhatsApp Cloud API message objects:
 // - text messages
 // - interactive buttons (up to 3 buttons)
@@ -7,7 +7,7 @@
 
 import { getServiceSupabase } from "./supabase";
 
-// âââ Message Types âââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Message Types ───────────────────────────────────────────────────
 
 export interface WATextMessage {
   type: "text";
@@ -41,7 +41,7 @@ export interface WAListMessage {
   type: "list";
   body: string;
   footer?: string;
-  buttonText: string; // max 20 chars â the CTA button label
+  buttonText: string; // max 20 chars — the CTA button label
   sections: WAListSection[];
 }
 
@@ -52,7 +52,7 @@ export interface BotResponse {
   leadCreated?: boolean;
 }
 
-// âââ Bot Configuration âââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Bot Configuration ───────────────────────────────────────────────
 
 export interface BotConfig {
   businessName: string;
@@ -75,28 +75,28 @@ export interface BotConfig {
 
 // Hardcoded defaults (used as fallback)
 const DEFAULT_CONFIG: BotConfig = {
-  businessName: "×××©×¨ ×××× ×× ×××××",
+  businessName: "כושר וחינוך ילדים",
   classes: [
-    { id: "fitness", name: "×××©×¨ ××××××", ages: "5-8", emoji: "ðª" },
-    { id: "gymnastics", name: "××ª×¢××××ª ××ª× ××¢×", ages: "6-10", emoji: "ð¤¸" },
-    { id: "martial", name: "×××× ××××ª ×××××", ages: "7-12", emoji: "ð¥" },
-    { id: "athletics", name: "××ª××××§× ×§××", ages: "8-14", emoji: "ð" },
-    { id: "yoga", name: "×××× ××××××", ages: "5-12", emoji: "ð§" },
+    { id: "fitness", name: "כושר לילדים", ages: "5-8", emoji: "💪" },
+    { id: "gymnastics", name: "התעמלות ותנועה", ages: "6-10", emoji: "🤸" },
+    { id: "martial", name: "אומנויות לחימה", ages: "7-12", emoji: "🥋" },
+    { id: "athletics", name: "אתלטיקה קלה", ages: "8-14", emoji: "🏃" },
+    { id: "yoga", name: "יוגה לילדים", ages: "5-12", emoji: "🧘" },
   ],
   pricing: {
-    once: { label: "×¤×¢× ××©×××¢", price: "250âª/××××©" },
-    twice: { label: "×¤×¢×××× ××©×××¢", price: "400âª/××××©" },
-    unlimited: { label: "×× ×× ×××¤×©×", price: "550âª/××××©" },
+    once: { label: "פעם בשבוע", price: "250₪/חודש" },
+    twice: { label: "פעמיים בשבוע", price: "400₪/חודש" },
+    unlimited: { label: "מנוי חופשי", price: "550₪/חודש" },
   },
   location: {
-    address: "[××× ×¡ ××ª×××ª ×××]",
-    hours: "××-××³ 14:00-20:00 | ××³ 09:00-13:00",
-    mapsLink: "[××× ×¡ ×§××©××¨ Google Maps]",
+    address: "[הכנס כתובת כאן]",
+    hours: "א׳-ה׳ 14:00-20:00 | ו׳ 09:00-13:00",
+    mapsLink: "[הכנס קישור Google Maps]",
   },
-  welcomeMessage: "×©×××! ð ××¨×××× ××××× ×*×××©×¨ ×××× ×× ×××××*!",
-  menuBody: "××× ××¤×©×¨ ××¢×××¨? ×××¨ ×××ª×¤×¨×× ð",
-  menuFooter: "×××©×¨ ×××× ×× ××××× ðï¸",
-  promoText: "ð *×××¦×¢ ××¦××¨×¤××ª:*\n××××© ×¨××©×× ×-50% ×× ××!",
+  welcomeMessage: "שלום! 👋 ברוכים הבאים ל*כושר וחינוך ילדים*!",
+  menuBody: "איך אפשר לעזות? בחר מהתפריט 👇",
+  menuFooter: "כושר וחינוך ילדים 🏋️",
+  promoText: "🎁 *מבצע הצטרפות:*\nחודש ראשון ב-50% הנחה!",
 };
 
 // Exported for the bot config page (read-only)
@@ -139,7 +139,7 @@ async function loadConfig(): Promise<BotConfig> {
   }
 }
 
-// âââ AI Intent Detection ââââââââââââââââââââââââââââââââââââââââââââ
+// ─── AI Intent Detection ────────────────────────────────────────────
 
 type Intent =
   | "classes"
@@ -183,15 +183,15 @@ async function detectIntent(
         messages: [
           {
             role: "user",
-            content: `××ª× ××¡××× ×××× ××ª ×©× ××§××××ª ×¢×××¨ ×¢×¡×§ "${cfg.businessName}".
-××××××: ${classNames}
+            content: `אתה מסווג כוונות של לקוחות עבור עסק "${cfg.businessName}".
+החוגים: ${classNames}
 
-×¡××× ××ª ×××××¢× ×××× ××××ª ×××§××××¨×××ª: classes, pricing, location, trial, agent, greeting, menu, unknown.
-×× ×××§×× ×©××× ×¢× ××× ×¡×¤×¦××¤×, ××××¨ ×× ××ª ×-id ×©××.
+סווג את ההודעה הבאה לאחת מהקטגוריות: classes, pricing, location, trial, agent, greeting, menu, unknown.
+אם הלקוח שואל על חוג ספציפי, החזר גם את ה-id שלו.
 
-××××¢×ª ×××§××: "${text}"
+הודעת הלקוח: "${text}"
 
-××××¨ JSON ××××: {"intent":"...", "classId":"..."} (classId ×¨×§ ×× ×¨×××× ××)`,
+החזר JSON בלבד: {"intent":"...", "classId":"..."} (classId רק אם רלוונטי)`,
           },
         ],
       }),
@@ -239,32 +239,32 @@ function basicIntentDetection(
   const t = text.toLowerCase();
 
   // Greeting
-  if (/^(×©×××|×××|××|hi|hello|start|×××§×¨ ×××|×¢×¨× ×××|×× × ×©××¢)$/i.test(t)) {
+  if (/^(שלום|היי|הי|hi|hello|start|בוקר טוב|ערב טוב|מה נשמע)$/i.test(t)) {
     return { intent: "greeting" };
   }
 
   // Pricing keywords
-  if (/××××¨|×¢×××ª|××× (×× )?×¢×××|×ª×¢×¨××£|×× ××|×××¦×¢|×¢×××|×ª×©×××|×× ××/.test(t)) {
+  if (/מחיר|עלות|כמה (זה )? עולה|תעריף|הנחה|מבצצע|עולה|תשלום|מנוי/.test(t)) {
     return { intent: "pricing" };
   }
 
   // Location keywords
-  if (/××ª×××ª|×××¤×|×××§××|×××¢×|×©×¢××ª|×¤×ª××|×¡×××¨|××¤×|× ××××|××¨×× ×××¢×/.test(t)) {
+  if (/כתובת|איפה|מיקום|הגעה|שעות|פתוח|סגור|מפה|ניווט|דרכי הגעה/.test(t)) {
     return { intent: "location" };
   }
 
   // Trial keywords
-  if (/× ××¡×××|× ×¡×××|×× ×¡××ª|××××¨×©××|×¨××©××|×××ª×××|×¨××¦× ×××¦××¨×£|××¦××¨×¤××ª/.test(t)) {
+  if (/ניסיון|נסיון|לנסות|להירשם|הרשמה|רישום|להתחיל|רוצה להצטרף|הצטרפות/.test(t)) {
     return { intent: "trial" };
   }
 
   // Agent keywords
-  if (/× ×¦××|×××|×× ?×××|×××©×|××××¨ ×¢×|×××¤××|××ª×§×©×¨×|×ª×ª×§×©×¨×/.test(t)) {
+  if (/נציג|אדם|בן ?אדם|אישי|לדבר עם|טלפון|התקשרו|תתקשרו/.test(t)) {
     return { intent: "agent" };
   }
 
   // Menu keywords
-  if (/×ª×¤×¨××|menu|××¤×©×¨××××ª|×× ××©|×× ××¤×©×¨/.test(t)) {
+  if (/תפריט|menu|אפשרויות|מה יש|מה אפשר/.test(t)) {
     return { intent: "menu" };
   }
 
@@ -276,14 +276,14 @@ function basicIntentDetection(
   }
 
   // General classes keywords
-  if (/×××|×××××|×©××¢××¨|×©××¢××¨××|×¤×¢××××ª|×¤×¢××××××ª|×××××|××××× ××|×§×××¦/.test(t)) {
+  if (/חוג|חוגים|שיעור|שיעורים|פעילות|פעילויות|אימון|אימונים|קבוצ/.test(t)) {
     return { intent: "classes" };
   }
 
   return { intent: "unknown" };
 }
 
-// âââ Conversation State Machine ââââââââââââââââââââââââââââââââââââââ
+// ─── Conversation State Machine ──────────────────────────────────────
 
 export type ConversationState =
   | "idle"
@@ -325,7 +325,7 @@ function setConv(userId: string, data: Partial<ConversationData>) {
   conversations.set(userId, { ...current, ...data, lastActivity: Date.now() });
 }
 
-// âââ Main Entry Point ââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Main Entry Point ────────────────────────────────────────────────
 
 export async function processMessage(
   userId: string,
@@ -339,7 +339,7 @@ export async function processMessage(
   const cfg = await loadConfig();
 
   // Global commands
-  if (text === "menu" || text === "×ªÖ¤×¨××" || text === "0") {
+  if (text === "menu" || text === "ת֤ריט" || text === "0") {
     setConv(userId, { state: "menu" });
     return { messages: [buildMainMenu(cfg)] };
   }
@@ -364,8 +364,8 @@ export async function processMessage(
       return {
         messages: [{
           type: "button",
-          body: "×××××¢× ×©×× ××ª×§××× ð\n× ×¦×× ×××××¨ ×××× ×××§××.",
-          buttons: [{ id: "btn_menu", title: "×××¨× ××ª×¤×¨××" }],
+          body: "ההודעה שלך התקבלה 🙏\nנציג יחזור אליך בהקדם.",
+          buttons: [{ id: "btn_menu", title: "חזרה לתפריט" }],
         }],
       };
     default:
@@ -373,14 +373,14 @@ export async function processMessage(
   }
 }
 
-// âââ Idle / First Contact ââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Idle / First Contact ────────────────────────────────────────────
 
 async function handleIdle(userId: string, text: string, cfg: BotConfig): Promise<BotResponse> {
   // Try AI intent detection on first message
   const { intent, classId } = await detectIntent(text, cfg);
 
   if (intent !== "unknown" && intent !== "greeting") {
-    // User asked something specific â route directly
+    // User asked something specific — route directly
     setConv(userId, { state: "menu" });
     return routeByIntent(userId, intent, classId, cfg);
   }
@@ -398,35 +398,35 @@ async function handleIdle(userId: string, text: string, cfg: BotConfig): Promise
   };
 }
 
-// âââ Main Menu (Interactive List) ââââââââââââââââââââââââââââââââââââ
+// ─── Main Menu (Interactive List) ────────────────────────────────────
 
 function buildMainMenu(cfg: BotConfig): WAListMessage {
   return {
     type: "list",
     body: cfg.menuBody,
     footer: cfg.menuFooter,
-    buttonText: "ð ×ªÖ¤×¨×× ×¨××©×",
+    buttonText: "📋 תפריט ראשי",
     sections: [
       {
-        title: "××××¢",
+        title: "מידע",
         rows: [
-          { id: "menu_classes", title: "ðï¸ ×××××× ×©×× ×", description: "××××¢ ×¢× ×× ×××××× ××××××××" },
-          { id: "menu_pricing", title: "ð° ××××¨××", description: "××××¨×× ××××¦×¢××" },
-          { id: "menu_location", title: "ð ×××§×× ××©×¢××ª", description: "××ª×××ª ××©×¢××ª ×¤×¢××××ª" },
+          { id: "menu_classes", title: "🏋️ החוגים שלנו", description: "מידע על כל החוגים והגילאים" },
+          { id: "menu_pricing", title: "💰 מחירון", description: "מחירים ומבצעים" },
+          { id: "menu_location", title: "📍 מיקום ושעות", description: "כתובת ושעות פעילות" },
         ],
       },
       {
-        title: "×¤×¢××××ª",
+        title: "פעולות",
         rows: [
-          { id: "menu_trial", title: "ð¯ ×©××¢××¨ × ××¡××× ××× ×", description: "××¨×©× ×¢××©×× ××©××¢××¨ × ××¡×××!" },
-          { id: "menu_agent", title: "ð¨âð¼ ×××¨ ×¢× × ×¦××", description: "×§×× ××¢× × ×××©× ×× ×¦×× ×©×× ×" },
+          { id: "menu_trial", title: "🎯 שיעור ניסיון חינם", description: "הרשם עכשיו לשיעור ניסיון!" },
+          { id: "menu_agent", title: "👨‍💼 דבר עם נציג", description: "קבל מענה אישי מנציג שלנו" },
         ],
       },
     ],
   };
 }
 
-// âââ Menu Selection Handler ââââââââââââââââââââââââââââââââââââââââââ
+// ─── Menu Selection Handler ──────────────────────────────────────────
 
 async function handleMenuSelection(userId: string, text: string, cfg: BotConfig): Promise<BotResponse> {
   // Handle button/list callbacks AND free text
@@ -449,7 +449,7 @@ async function handleMenuSelection(userId: string, text: string, cfg: BotConfig)
     return {
       messages: [{
         type: "text",
-        text: "××¢×××! ð ×××× × ×ª×× ×©××¢××¨ × ××¡××× ××× ×!\n\n×× ××©× ×××× ×©××?",
+        text: "מעולה! 🎉 בואו נתאם שיעור ניסיון חינם!\n\nמה השם המלא שלך?",
       }],
     };
   }
@@ -465,8 +465,8 @@ async function handleMenuSelection(userId: string, text: string, cfg: BotConfig)
     return {
       messages: [{
         type: "button",
-        body: "ð¨âð¼ ××¢×××¨ ×××ª× ×× ×¦××...\n× ××××¨ ×××× ×××§××!\n\n××× ×ª××× ××¤×©×¨ ××©××× ×× ×©×××.",
-        buttons: [{ id: "btn_menu", title: "×××¨× ××ªÖ¤×¨××" }],
+        body: "👨‍💼 מעביר אותך לנציג...\nנחזור אליך בהקדם!\n\nבינתיים אפשר לשלוח כל שאלה.",
+        buttons: [{ id: "btn_menu", title: "חזרה לתפריט" }],
       }],
     };
   }
@@ -477,26 +477,26 @@ async function handleMenuSelection(userId: string, text: string, cfg: BotConfig)
     return { messages: [buildMainMenu(cfg)] };
   }
 
-  // âââ AI Intent Detection for free text ââââââââââââââââââââââââââââ
+  // ─── AI Intent Detection for free text ────────────────────────────
   const { intent, classId } = await detectIntent(text, cfg);
 
   if (intent !== "unknown") {
     return routeByIntent(userId, intent, classId, cfg);
   }
 
-  // Truly unknown â show menu
+  // Truly unknown — show menu
   return {
     messages: [{
       type: "button",
-      body: "×× ××× ×ª× ð\n×××¨ ××¤×©×¨××ª ×××ªÖ¤×¨××:",
+      body: "לא הבנתי 😅\nבחר אפשרות מהתפריט:",
       buttons: [
-        { id: "btn_menu", title: "ð ×ª×¤×¨×× ×¨××©×" },
+        { id: "btn_menu", title: "📋 תפריט ראשי" },
       ],
     }],
   };
 }
 
-// âââ Route by Detected Intent âââââââââââââââââââââââââââââââââââââââ
+// ─── Route by Detected Intent ───────────────────────────────────────
 
 function routeByIntent(
   userId: string,
@@ -513,12 +513,12 @@ function routeByIntent(
           return {
             messages: [{
               type: "button",
-              body: `${classMatch.emoji} *${classMatch.name}*\n\n×××××: ${classMatch.ages}\n\nð ××××: ××³, ××³, ××³\nð ×©×¢××ª: ××¤× ×§×××¦××ª ×××\nð¥ ×§×××¦××ª ×§×× ××ª ×¢× 12 ×××××\nð ×××× ×× ×××¡×××× ×¢× × ××¡×××\n\nâ¨ ×©××¢××¨ × ××¡××× ×¨××©×× â ××× ×!`,
+              body: `${classMatch.emoji} *${classMatch.name}*\n\nגילאי: ${classMatch.ages}\n\n📅 ימים: א׳, ג׳, ה׳\n🕐 שעות: לפי קבוצות גיל\n👥 קבוצות קטנות עד 12 ילדים\n🏆 מאמנים מוסמכים עם ניסיון\n\n✨ שיעור ניסיון ראשון — חינם!`,
               footer: cfg.businessName,
               buttons: [
-                { id: "menu_trial", title: "ð¯ ×©××¢××¨ × ××¡×××" },
-                { id: "menu_pricing", title: "ð° ××××¨××" },
-                { id: "btn_menu", title: "ð ×ª×¤×¨×× ×¨××©×" },
+                { id: "menu_trial", title: "🎯 שיעור ניסיון" },
+                { id: "menu_pricing", title: "💰 מחירון" },
+                { id: "btn_menu", title: "📋 תפריט ראשי" },
               ],
             }],
           };
@@ -538,7 +538,7 @@ function routeByIntent(
       return {
         messages: [{
           type: "text",
-          text: "××¢×××! ð ×××× × ×ª×× ×©××¢××¨ × ××¡××× ××× ×!\n\n×× ××©× ×××× ×©××?",
+          text: "מעולה! 🎉 בואו נתאם שיעור ניסיון חינם!\n\nמה השם המלא שלך?",
         }],
       };
 
@@ -547,8 +547,8 @@ function routeByIntent(
       return {
         messages: [{
           type: "button",
-          body: "ð¨âð¼ ××¢×××¨ ×××ª× ×× ×¦××...\n× ××××¨ ×××× ×××§××!\n\n××× ×ª××× ××¤×©×¨ ××©××× ×× ×©×××.",
-          buttons: [{ id: "btn_menu", title: "×××¨× ××ª×¤×¨××" }],
+          body: "👨‍💼 מעביר אותך לנציג...\nנחזות אליך בהקדם!\n\nבינתיים אפשר לשלוח כל שאלה.",
+          buttons: [{ id: "btn_menu", title: "חזרה לתפריט" }],
         }],
       };
 
@@ -570,21 +570,21 @@ function routeByIntent(
   }
 }
 
-// âââ Classes List ââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Classes List ────────────────────────────────────────────────────
 
 function buildClassesList(cfg: BotConfig): WAListMessage {
   return {
     type: "list",
-    body: "ðï¸ *×××××× ×©×× ×*\n\n×× ×××××× ××××××:\nâ ×××× ×× ×××¡××××\nâ ×§×××¦××ª ×§×× ××ª\nâ ×©××¢××¨ × ××¡××× ××× ×\n\n×××¨ ××× ××¤×¨××× × ××¡×¤××:",
-    footer: "×××¨ ××× ×××¨×©××× ð",
-    buttonText: "ð ×¨×©×××ª ×××××",
+    body: "🏋️ *החוגים שלנו*\n\nכל החוגים כוללים:\n✅ מאמנים מוסמכים\n✅ קבוצות קטנות\n✅ שיעור ניסיון חינם\n\nבחר חוג לפרטים נוספים:",
+    footer: "בחר חוג מהרשימה 👇",
+    buttonText: "📋 רשימת חוגים",
     sections: [
       {
-        title: "××××××",
+        title: "החוגים",
         rows: cfg.classes.map((c) => ({
           id: `class_${c.id}`,
           title: `${c.emoji} ${c.name}`,
-          description: `××××× ${c.ages}`,
+          description: `גילאי ${c.ages}`,
         })),
       },
     ],
@@ -603,12 +603,12 @@ async function handleClassInfo(userId: string, text: string, cfg: BotConfig): Pr
     return {
       messages: [{
         type: "button",
-        body: `${classMatch.emoji} *${classMatch.name}*\n\n×××××: ${classMatch.ages}\n\nð ××××: ××³, ××³, ××³\nð ×©×¢××ª: ××¤× ×§×××¦××ª ×××\nð¥ ×§×××¦××ª ×§×× ××ª ×¢× 12 ×××××\nð ×××× ×× ×××¡×××× ×¢× × ××¡×××\n\nâ¨ ×©××¢××¨ × ××¡××× ×¨××©×× â ××× ×!`,
+        body: `${classMatch.emoji} *${classMatch.name}*\n\nגילאי: ${classMatch.ages}\n\n📅 ימים: א׳, ג׳, ה׳\n🕐 שעות: לפי קבוצות גיל\n👥 קבוצות קטנות עד 12 ילדים\n🏆 מאמנים מוסמכים עם ניסיון\n\n✨ שיעור ניסיון ראשון — חינם!`,
         footer: cfg.businessName,
         buttons: [
-          { id: "menu_trial", title: "ð¯ ×©××¢××¨ × ××¡×××" },
-          { id: "menu_pricing", title: "ð° ××××¨××" },
-          { id: "btn_menu", title: "ð ×ª×¤×¨×× ×¨××©×" },
+          { id: "menu_trial", title: "🎯 שיעור ניסיון" },
+          { id: "menu_pricing", title: "💰 מחירון" },
+          { id: "btn_menu", title: "📋 תפריט ראשי" },
         ],
       }],
     };
@@ -624,45 +624,45 @@ async function handleClassInfo(userId: string, text: string, cfg: BotConfig): Pr
   return { messages: [buildClassesList(cfg)] };
 }
 
-// âââ Pricing âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Pricing ─────────────────────────────────────────────────────────
 
 function buildPricingMessage(cfg: BotConfig): WAButtonMessage {
   const p = cfg.pricing;
   return {
     type: "button",
-    body: `ð° *××××¨××*\n\nð ${p.once.label} â ${p.once.price}\nð ${p.twice.label} â ${p.twice.price}\nð ${p.unlimited.label} â ${p.unlimited.price}\n\n${cfg.promoText}`,
+    body: `💰 *מחירון*\n\n📌 ${p.once.label} — ${p.once.price}\n📌 ${p.twice.label} — ${p.twice.price}\n📌 ${p.unlimited.label} — ${p.unlimited.price}\n\n${cfg.promoText}`,
     footer: cfg.businessName,
     buttons: [
-      { id: "menu_trial", title: "ð¯ ×©××¢××¨ × ××¡×××" },
-      { id: "menu_classes", title: "ðï¸ ××××××" },
-      { id: "btn_menu", title: "ð ×ª×¤×¨×× ×¨××©×" },
+      { id: "menu_trial", title: "🎯 שיעור ניסיון" },
+      { id: "menu_classes", title: "🏋️ החוגים" },
+      { id: "btn_menu", title: "📋 תפריט ראשי" },
     ],
   };
 }
 
-// âââ Location ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Location ────────────────────────────────────────────────────────
 
 function buildLocationMessage(cfg: BotConfig): WAButtonMessage {
   const loc = cfg.location;
   return {
     type: "button",
-    body: `ð *×××§×× ××©×¢××ª ×¤×¢××××ª*\n\nð  ××ª×××ª: ${loc.address}\nð ${loc.hours}\nð« ×©××ª: ×¡×××¨\n\nðº ${loc.mapsLink}`,
+    body: `📍 *מיקום ושעות פעילות*\n\n🏠 כתובת: ${loc.address}\n🕐 ${loc.hours}\n🚫 שבת: סגור\n\n🗺 ${loc.mapsLink}`,
     footer: cfg.businessName,
     buttons: [
-      { id: "menu_trial", title: "ð¯ ×©××¢××¨ × ××¡×××" },
-      { id: "btn_menu", title: "ð ×ª×¤×¨×× ×¨××©×" },
+      { id: "menu_trial", title: "🎯 שיעור ניסיון" },
+      { id: "btn_menu", title: "📋 תפריט ראשי" },
     ],
   };
 }
 
-// âââ Trial Booking Flow (Conversational) âââââââââââââââââââââââââââââ
+// ─── Trial Booking Flow (Conversational) ─────────────────────────────
 
 function handleCollectName(userId: string, text: string): BotResponse {
   setConv(userId, { state: "collect_phone", name: text });
   return {
     messages: [{
       type: "text",
-      text: `× ×¢×× ×××× ${text}! ð\n\nð± ×× ××¡×¤×¨ ××××¤×× ×©××?`,
+      text: `נעים מאוד ${text}! 😊\n\n📱 מה מספר הטלפון שלך?`,
     }],
   };
 }
@@ -674,7 +674,7 @@ function handleCollectPhone(userId: string, text: string): BotResponse {
     return {
       messages: [{
         type: "text",
-        text: "ð¤ ×××¡×¤×¨ ×× × ×¨×× ×ª×§××.\n× ×¡× ×©×× ××¤××¨××: 050-1234567",
+        text: "🤔 המספר לא נראה תקין.\nנסה שוב בפורמט: 050-1234567",
       }],
     };
   }
@@ -683,7 +683,7 @@ function handleCollectPhone(userId: string, text: string): BotResponse {
   return {
     messages: [{
       type: "button",
-      body: "ð¶ ×× ×××× ×©× ××××/×?",
+      body: "👶 מה הגיל של הילד/ה?",
       buttons: [
         { id: "age_5_7", title: "5-7" },
         { id: "age_8_10", title: "8-10" },
@@ -706,7 +706,7 @@ function handleCollectChildAge(userId: string, text: string): BotResponse {
   return {
     messages: [{
       type: "text",
-      text: "ðï¸ ××××× ×¢××¨ ××ª/×?",
+      text: "🏙️ מאיזו עיר את/ה?",
     }],
   };
 }
@@ -730,7 +730,7 @@ async function handleCollectCity(
     child_age: data.child_age ? parseInt(data.child_age) : null,
     source: platform,
     status: "interested",
-    notes: `[×¦×³×× ××× ${platform}] ××¨×©×× ××©××¢××¨ × ××¡×××. User: ${userId}`,
+    notes: `[צ׳אט בוט ${platform}] הרשמה לשיעור ניסיון. User: ${userId}`,
     follow_up_date: new Date().toISOString().split("T")[0],
   };
 
@@ -758,22 +758,22 @@ async function handleCollectCity(
     messages: [
       {
         type: "text",
-        text: `â *× ×¨×©××ª ×××¦×××!*\n\nð ×¡××××:\nð¤ ×©×: ${data.name}\nð± ×××¤××: ${data.phone}\nð¶ ×××: ${data.child_age}\nðï¸ ×¢××¨: ${data.city}\n\n× ××××¨ ×××× ×ª×× 24 ×©×¢××ª ××ª×××× ××× ××©×¢×.\n×ª××× ×¨××! ðª`,
+        text: `✅ *נרשמת בהצלחה!*\n\n📋 סיכום:\n👤 שם: ${data.name}\n📱 טלפון: ${data.phone}\n👶 גיל: ${data.child_age}\n🏙️ עיר: ${data.city}\n\nנחזור אליך תוך 24 שעות לתיאום יום ושעה.\nתודה רבה! 💪`,
       },
       {
         type: "button",
-        body: "×¨××¦× ××¨×××ª ×¢×× ××©××?",
+        body: "רוצה לראות עוד משהו?",
         buttons: [
-          { id: "menu_classes", title: "ðï¸ ××××××" },
-          { id: "menu_pricing", title: "ð° ××××¨××" },
-          { id: "btn_menu", title: "ð ×ª×¤×¨×× ×¨××©×" },
+          { id: "menu_classes", title: "🏋️ החוגים" },
+          { id: "menu_pricing", title: "💰 מחירון" },
+          { id: "btn_menu", title: "📋 תפריט ראשי" },
         ],
       },
     ],
   };
 }
 
-// âââ Utility: Get Welcome Message ââââââââââââââââââââââââââââââââââââ
+// ─── Utility: Get Welcome Message ────────────────────────────────────
 
 export async function getWelcomeMessage(): Promise<string> {
   const cfg = await loadConfig();
