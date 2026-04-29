@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { processMessage, BotMessage } from "@/lib/chatbot";
 
-// ─── Messenger + Instagram Webhook ───────────────────────────────────
+// âââ Messenger + Instagram Webhook âââââââââââââââââââââââââââââââââââ
 // Handles both platforms. Supports quick reply buttons (Messenger).
 // Lists degrade to text with numbered options on Messenger/Instagram.
 
 const GRAPH_API = "https://graph.facebook.com/v18.0";
 
-// GET — Verification
+// GET â Verification
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const mode = searchParams.get("hub.mode");
@@ -21,9 +22,20 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
-// POST — Incoming messages
+// POST â Incoming messages
 export async function POST(req: NextRequest) {
   try {
+    // Signature verification
+    const signature = req.headers.get('x-hub-signature-256');
+    const appSecret = process.env.META_APP_SECRET;
+    if (appSecret && signature) {
+      const rawBody = await req.clone().text();
+      const hmac = crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+      if (signature !== `sha256=${hmac}`) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+    }
+
     const body = await req.json();
     const entries = body.entry || [];
 
@@ -66,7 +78,7 @@ function isInstagram(event: any): boolean {
   return !!event.sender?.id && !!event.recipient?.id && event.sender.id.length > 15;
 }
 
-// ─── Send Message (with Quick Replies for buttons) ───────────────────
+// âââ Send Message (with Quick Replies for buttons) âââââââââââââââââââ
 
 async function sendMessengerMessage(recipientId: string, msg: BotMessage) {
   const token = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
@@ -102,7 +114,7 @@ async function sendMessengerMessage(recipientId: string, msg: BotMessage) {
       const listText = msg.body + "\n\n" +
         msg.sections
           .flatMap((s) => s.rows)
-          .map((row) => `${row.title}${row.description ? ` — ${row.description}` : ""}`)
+          .map((row) => `${row.title}${row.description ? ` â ${row.description}` : ""}`)
           .join("\n");
 
       const quickReplies = msg.sections
