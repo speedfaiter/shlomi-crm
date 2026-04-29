@@ -90,7 +90,7 @@ const DEFAULT_CONFIG: BotConfig = {
   },
   location: {
     address: "[××× ×¡ ××ª×××ª ×××]",
-    hours: "××³-××³ 14:00-20:00 | ××³ 09:00-13:00",
+    hours: "××-××³ 14:00-20:00 | ××³ 09:00-13:00",
     mapsLink: "[××× ×¡ ×§××©××¨ Google Maps]",
   },
   welcomeMessage: "×©×××! ð ××¨×××× ××××× ×*×××©×¨ ×××× ×× ×××××*!",
@@ -166,6 +166,9 @@ async function detectIntent(
       .map((c) => `${c.id}: ${c.name}`)
       .join(", ");
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -173,6 +176,7 @@ async function detectIntent(
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
+      signal: controller.signal,
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 60,
@@ -192,6 +196,8 @@ async function detectIntent(
         ],
       }),
     });
+
+    clearTimeout(timeout);
 
     if (!res.ok) throw new Error(`API ${res.status}`);
     const data = await res.json();
@@ -243,12 +249,12 @@ function basicIntentDetection(
   }
 
   // Location keywords
-  if (/××ª×××ª|×××¤×|×××§××|×××¢×|×©×¢××ª|×¤×ª××|×¡×××¨|×Ö¤×|× ××××|××¨×× ×××¢×/.test(t)) {
+  if (/××ª×××ª|×××¤×|×××§××|×××¢×|×©×¢××ª|×¤×ª××|×¡×××¨|××¤×|× ××××|××¨×× ×××¢×/.test(t)) {
     return { intent: "location" };
   }
 
   // Trial keywords
-  if (/× ××¡×××|× ×¡×××|×× ×¡××ª|××××¨×©×|××¨×©××|×¨××©××|×××ª×××|×¨××¦× ×××¦××¨×£|××¦××¨×¤××ª/.test(t)) {
+  if (/× ××¡×××|× ×¡×××|×× ×¡××ª|××××¨×©××|×¨××©××|×××ª×××|×¨××¦× ×××¦××¨×£|××¦××¨×¤××ª/.test(t)) {
     return { intent: "trial" };
   }
 
@@ -298,7 +304,17 @@ interface ConversationData {
   city?: string;
 }
 
-const conversations = new Map<string, ConversationData>();
+const conversations = new Map<string, ConversationData & { lastActivity?: number }>();
+
+const CONV_TTL = 30 * 60 * 1000; // 30 min
+function cleanupConversations() {
+  const now = Date.now();
+  const keysToDelete: string[] = [];
+  conversations.forEach((conv, key) => {
+    if (now - (conv.lastActivity || 0) > CONV_TTL) keysToDelete.push(key);
+  });
+  keysToDelete.forEach((k) => conversations.delete(k));
+}
 
 function getConv(userId: string): ConversationData {
   return conversations.get(userId) || { state: "idle" };
@@ -306,7 +322,7 @@ function getConv(userId: string): ConversationData {
 
 function setConv(userId: string, data: Partial<ConversationData>) {
   const current = getConv(userId);
-  conversations.set(userId, { ...current, ...data });
+  conversations.set(userId, { ...current, ...data, lastActivity: Date.now() });
 }
 
 // âââ Main Entry Point ââââââââââââââââââââââââââââââââââââââââââââââââ
@@ -316,12 +332,14 @@ export async function processMessage(
   message: string,
   platform: "whatsapp" | "messenger" | "instagram"
 ): Promise<BotResponse> {
+  if (conversations.size > 500) cleanupConversations();
+
   const text = message.trim();
   const conv = getConv(userId);
   const cfg = await loadConfig();
 
   // Global commands
-  if (text === "menu" || text === "×ª×¤×¨××" || text === "0") {
+  if (text === "menu" || text === "×ªÖ¤×¨××" || text === "0") {
     setConv(userId, { state: "menu" });
     return { messages: [buildMainMenu(cfg)] };
   }
@@ -387,7 +405,7 @@ function buildMainMenu(cfg: BotConfig): WAListMessage {
     type: "list",
     body: cfg.menuBody,
     footer: cfg.menuFooter,
-    buttonText: "ð ×ª×¤×¨×× ×¨××©×",
+    buttonText: "ð ×ªÖ¤×¨×× ×¨××©×",
     sections: [
       {
         title: "××××¢",
@@ -448,7 +466,7 @@ async function handleMenuSelection(userId: string, text: string, cfg: BotConfig)
       messages: [{
         type: "button",
         body: "ð¨âð¼ ××¢×××¨ ×××ª× ×× ×¦××...\n× ××××¨ ×××× ×××§××!\n\n××× ×ª××× ××¤×©×¨ ××©××× ×× ×©×××.",
-        buttons: [{ id: "btn_menu", title: "×××¨× ××ª×¤×¨××" }],
+        buttons: [{ id: "btn_menu", title: "×××¨× ××ªÖ¤×¨××" }],
       }],
     };
   }
@@ -470,7 +488,7 @@ async function handleMenuSelection(userId: string, text: string, cfg: BotConfig)
   return {
     messages: [{
       type: "button",
-      body: "×× ××× ×ª× ð\n×××¨ ××¤×©×¨××ª ×××ª×¤×¨××:",
+      body: "×× ××× ×ª× ð\n×××¨ ××¤×©×¨××ª ×××ªÖ¤×¨××:",
       buttons: [
         { id: "btn_menu", title: "ð ×ª×¤×¨×× ×¨××©×" },
       ],
@@ -702,23 +720,34 @@ async function handleCollectCity(
   const conv = getConv(userId);
   const data = { ...conv, city: text };
 
-  // Save lead to Supabase
+  // Save lead to Supabase (with one retry)
   let leadSaved = false;
+  const supabase = getServiceSupabase();
+  const leadPayload = {
+    name: data.name || "",
+    phone: data.phone || "",
+    city: data.city || "",
+    child_age: data.child_age ? parseInt(data.child_age) : null,
+    source: platform,
+    status: "interested",
+    notes: `[×¦×³×× ××× ${platform}] ××¨×©×× ××©××¢××¨ × ××¡×××. User: ${userId}`,
+    follow_up_date: new Date().toISOString().split("T")[0],
+  };
+
   try {
-    const supabase = getServiceSupabase();
-    await supabase.from("leads").insert({
-      name: data.name || "",
-      phone: data.phone || "",
-      city: data.city || "",
-      child_age: data.child_age ? parseInt(data.child_age) : null,
-      source: platform,
-      status: "interested",
-      notes: `[×¦×³×× ××× ${platform}] ××¨×©×× ××©××¢××¨ × ××¡×××. User: ${userId}`,
-      follow_up_date: new Date().toISOString().split("T")[0],
-    });
+    const { error } = await supabase.from("leads").insert(leadPayload);
+    if (error) throw error;
     leadSaved = true;
   } catch (err) {
-    console.error("[Chatbot] Failed to save lead:", err);
+    console.warn("[Chatbot] Lead save failed, retrying in 1s:", err);
+    try {
+      await new Promise((r) => setTimeout(r, 1000));
+      const { error } = await supabase.from("leads").insert(leadPayload);
+      if (error) throw error;
+      leadSaved = true;
+    } catch (retryErr) {
+      console.error("[Chatbot] Lead save retry also failed:", retryErr);
+    }
   }
 
   // Reset conversation
