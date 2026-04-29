@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// PUT /api/leads/[id] â update a lead
+// PUT /api/leads/[id] — update a lead
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -27,7 +27,7 @@ export async function PUT(
   return NextResponse.json(data);
 }
 
-// DELETE /api/leads/[id] â delete a lead
+// DELETE /api/leads/[id] — delete a lead
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
