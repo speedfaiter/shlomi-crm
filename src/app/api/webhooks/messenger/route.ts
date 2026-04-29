@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { processMessage, BotMessage } from "@/lib/chatbot";
 
-// âââ Messenger + Instagram Webhook âââââââââââââââââââââââââââââââââââ
+// ─── Messenger + Instagram Webhook ───────────────────────────────────
 // Handles both platforms. Supports quick reply buttons (Messenger).
 // Lists degrade to text with numbered options on Messenger/Instagram.
 
 const GRAPH_API = "https://graph.facebook.com/v18.0";
 
-// GET â Verification
+// GET — Verification
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const mode = searchParams.get("hub.mode");
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
-// POST â Incoming messages
+// POST — Incoming messages
 export async function POST(req: NextRequest) {
   try {
     // Signature verification
@@ -78,7 +78,7 @@ function isInstagram(event: any): boolean {
   return !!event.sender?.id && !!event.recipient?.id && event.sender.id.length > 15;
 }
 
-// âââ Send Message (with Quick Replies for buttons) âââââââââââââââââââ
+// ─── Send Message (with Quick Replies for buttons) ───────────────────
 
 async function sendMessengerMessage(recipientId: string, msg: BotMessage) {
   const token = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
@@ -114,7 +114,7 @@ async function sendMessengerMessage(recipientId: string, msg: BotMessage) {
       const listText = msg.body + "\n\n" +
         msg.sections
           .flatMap((s) => s.rows)
-          .map((row) => `${row.title}${row.description ? ` â ${row.description}` : ""}`)
+          .map((row) => `${row.title}${row.description ? ` — ${row.description}` : ""}`)
           .join("\n");
 
       const quickReplies = msg.sections
