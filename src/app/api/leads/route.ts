@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET /api/leads â list all leads
+// GET /api/leads — list all leads
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(data);
 }
 
-// POST /api/leads â create a new lead
+// POST /api/leads — create a new lead
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
