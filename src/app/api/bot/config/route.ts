@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 
-// GET /api/bot/config — read current bot config
+// GET /api/bot/config â read current bot config
 export async function GET() {
   try {
     const supabase = getServiceSupabase();
@@ -19,35 +19,42 @@ export async function GET() {
     // Return hardcoded defaults if table doesn't exist yet
     return NextResponse.json({
       id: "default",
-      business_name: "כושר וחינוך ילדים",
+      business_name: "×××©×¨ ×××× ×× ×××××",
       classes: [
-        { id: "fitness", name: "כושר לילדים", ages: "5-8", emoji: "💪" },
-        { id: "gymnastics", name: "התעמלות ותנועה", ages: "6-10", emoji: "🤸" },
-        { id: "martial", name: "אומנויות לחימה", ages: "7-12", emoji: "🥋" },
-        { id: "athletics", name: "אתלטיקה קלה", ages: "8-14", emoji: "🏃" },
-        { id: "yoga", name: "יוגה לילדים", ages: "5-12", emoji: "🧘" },
+        { id: "fitness", name: "×××©×¨ ××××××", ages: "5-8", emoji: "ðª" },
+        { id: "gymnastics", name: "××ª×¢××××ª ××ª× ××¢×", ages: "6-10", emoji: "ð¤¸" },
+        { id: "martial", name: "×××× ××××ª ×××××", ages: "7-12", emoji: "ð¥" },
+        { id: "athletics", name: "××ª××××§× ×§××", ages: "8-14", emoji: "ð" },
+        { id: "yoga", name: "×××× ××××××", ages: "5-12", emoji: "ð§" },
       ],
       pricing: {
-        once: { label: "פעם בשבוע", price: "250₪/חודש" },
-        twice: { label: "פעמיים בשבוע", price: "400₪/חודש" },
-        unlimited: { label: "מנוי חופשי", price: "550₪/חודש" },
+        once: { label: "×¤×¢× ××©×××¢", price: "250âª/××××©" },
+        twice: { label: "×¤×¢×××× ××©×××¢", price: "400âª/××××©" },
+        unlimited: { label: "×× ×× ×××¤×©×", price: "550âª/××××©" },
       },
       location: {
-        address: "[הכנס כתובת כאן]",
-        hours: "א׳-ה׳ 14:00-20:00 | ו׳ 09:00-13:00",
-        mapsLink: "[הכנס קישור Google Maps]",
+        address: "[××× ×¡ ××ª×××ª ×××]",
+        hours: "××³-××³ 14:00-20:00 | ××³ 09:00-13:00",
+        mapsLink: "[××× ×¡ ×§××©××¨ Google Maps]",
       },
-      welcome_message: "שלום! 👋 ברוכים הבאים ל*כושר וחינוך ילדים*!",
-      menu_body: "איך אפשר לעזור? בחר מהתפריט 👇",
-      menu_footer: "כושר וחינוך ילדים 🏋️",
-      promo_text: "🎁 *מבצע הצטרפות:*\nחודש ראשון ב-50% הנחה!",
+      welcome_message: "×©×××! ð ××¨×××× ××××× ×*×××©×¨ ×××× ×× ×××××*!",
+      menu_body: "××× ××¤×©×¨ ××¢×××¨? ×××¨ ×××ª×¤×¨×× ð",
+      menu_footer: "×××©×¨ ×××× ×× ××××× ðï¸",
+      promo_text: "ð *×××¦×¢ ××¦××¨×¤××ª:*\n××××© ×¨××©×× ×-50% ×× ××!",
     });
   }
 }
 
-// PUT /api/bot/config — update bot config
+// PUT /api/bot/config â update bot config
 export async function PUT(request: Request) {
   try {
+    // API key check
+    const authHeader = request.headers.get('authorization');
+    const token = process.env.ADMIN_TOKEN;
+    if (token && authHeader !== `Bearer ${token}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const supabase = getServiceSupabase();
 
