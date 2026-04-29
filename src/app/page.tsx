@@ -50,7 +50,7 @@ export default function Home() {
       setLeads(data.leads || data);
       setTotalCount(data.totalCount || (Array.isArray(data) ? data.length : 0));
     } catch (err: any) {
-      setError(err.message || "×©×××× ×××¢×× ×ª ×××××");
+      setError(err.message || "שגיאה בטעינת לידים");
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function Home() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("×××××§ ××× ××?")) return;
+    if (!confirm("למחוק ליד זה?")) return;
     await fetch(`/api/leads/${id}`, { method: "DELETE" });
     fetchLeads();
     fetchStats();
@@ -115,7 +115,7 @@ export default function Home() {
 
       <div className="bg-white rounded-lg shadow-sm border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="text-lg font-semibold">×××××</h2>
+          <h2 className="text-lg font-semibold">לידים</h2>
           <button
             onClick={() => {
               setEditingLead(null);
@@ -123,14 +123,14 @@ export default function Home() {
             }}
             className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition text-sm"
           >
-            + ××× ×××©
+            + ליד חדש
           </button>
         </div>
 
         <div className="flex flex-wrap gap-3 mb-4">
           <input
             type="text"
-            placeholder="×××¤××© ××¤× ×©×, ×××¤×× ×× ×¢××¨..."
+            placeholder="חיפוש לפי שם, טלפון או עיר..."
             value={search}
             onChange={(e) => {
               const val = e.target.value;
@@ -147,7 +147,7 @@ export default function Home() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm"
           >
-            <option value="all">×× ××¡××××¡××</option>
+            <option value="all">כל הסטטוסים</option>
             {Object.entries(STATUS_LABELS).map(([key, label]) => (
               <option key={key} value={key}>
                 {label}
@@ -163,7 +163,7 @@ export default function Home() {
         )}
 
         {loading ? (
-          <p className="text-center text-gray-500 py-8">×××¢×...</p>
+          <p className="text-center text-gray-500 py-8">טוען...</p>
         ) : (
           <LeadsTable
             leads={leads}
@@ -180,15 +180,15 @@ export default function Home() {
             disabled={page === 1}
             className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
           >
-            ××§×××
+            הקודם
           </button>
-          <span>×¢××× {page} ××ª×× {Math.ceil(totalCount / pageSize) || 1}</span>
+          <span>עמוד {page} מתוך {Math.ceil(totalCount / pageSize) || 1}</span>
           <button
             onClick={() => setPage(p => p + 1)}
             disabled={page * pageSize >= totalCount}
             className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
           >
-            ×××
+            הבא
           </button>
         </div>
       </div>
