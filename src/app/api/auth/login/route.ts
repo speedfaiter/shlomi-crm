@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     if (password !== adminPassword) {
-      return NextResponse.json({ error: "×¡××¡×× ×©××××" }, { status: 401 });
+      return NextResponse.json({ error: "סיסמה שגויה" }, { status: 401 });
     }
 
     const token = process.env.ADMIN_TOKEN;
