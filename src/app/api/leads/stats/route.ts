@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET /api/leads/stats â dashboard summary
+// GET /api/leads/stats — dashboard summary
 export async function GET() {
   const { data: leads, error } = await supabase.from("leads").select("status, follow_up_date, source");
 
