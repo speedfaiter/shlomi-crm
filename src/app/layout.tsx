@@ -3,8 +3,8 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "CRM - × ×××× ×××××",
-  description: "××¢×¨××ª × ×××× ××××× ××¢×¡×§ ×××©×¨ ×××× ×× ×××××",
+  title: "CRM - ניהול לידים",
+  description: "מערכת ניהול לידים לעסק כושר וחינוך ילדים",
 };
 
 export default function RootLayout({
