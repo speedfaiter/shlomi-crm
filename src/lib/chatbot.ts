@@ -54,9 +54,28 @@ export interface BotResponse {
 
 // ─── Bot Configuration ───────────────────────────────────────────────
 
-export const BOT_CONFIG = {
-  businessName: "כושר וחינוך ילדים",
+export interface BotConfig {
+  businessName: string;
+  classes: Array<{ id: string; name: string; ages: string; emoji: string }>;
+  pricing: {
+    once: { label: string; price: string };
+    twice: { label: string; price: string };
+    unlimited: { label: string; price: string };
+  };
+  location: {
+    address: string;
+    hours: string;
+    mapsLink: string;
+  };
+  welcomeMessage: string;
+  menuBody: string;
+  menuFooter: string;
+  promoText: string;
+}
 
+// Hardcoded defaults (used as fallback)
+const DEFAULT_CONFIG: BotConfig = {
+  businessName: "כושר וחינוך ילדים",
   classes: [
     { id: "fitness", name: "כושר לילדים", ages: "5-8", emoji: "💪" },
     { id: "gymnastics", name: "התעמלות ותנועה", ages: "6-10", emoji: "🤸" },
@@ -64,19 +83,61 @@ export const BOT_CONFIG = {
     { id: "athletics", name: "אתלטיקה קלה", ages: "8-14", emoji: "🏃" },
     { id: "yoga", name: "יוגה לילדים", ages: "5-12", emoji: "🧘" },
   ],
-
   pricing: {
     once: { label: "פעם בשבוע", price: "250₪/חודש" },
     twice: { label: "פעמיים בשבוע", price: "400₪/חודש" },
     unlimited: { label: "מנוי חופשי", price: "550₪/חודש" },
   },
-
   location: {
     address: "[הכנס כתובת כאן]",
     hours: "א׳-ה׳ 14:00-20:00 | ו׳ 09:00-13:00",
     mapsLink: "[הכנס קישור Google Maps]",
   },
+  welcomeMessage: "שלום! 👋 ברוכים הבאים ל*כושר וחינוך ילדים*!",
+  menuBody: "איך אפשר לעזור? בחר מהתפריט 👇",
+  menuFooter: "כושר וחינוך ילדים 🏋️",
+  promoText: "🎁 *מבצע הצטרפות:*\nחודש ראשון ב-50% הנחה!",
 };
+
+// Exported for the bot config page (read-only)
+export const BOT_CONFIG = DEFAULT_CONFIG;
+
+// Cache config in memory for 60 seconds
+let cachedConfig: BotConfig | null = null;
+let cacheTime = 0;
+const CACHE_TTL = 60_000;
+
+async function loadConfig(): Promise<BotConfig> {
+  if (cachedConfig && Date.now() - cacheTime < CACHE_TTL) {
+    return cachedConfig;
+  }
+  try {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("bot_config")
+      .select("*")
+      .eq("id", "default")
+      .single();
+
+    if (error || !data) throw error || new Error("No config");
+
+    cachedConfig = {
+      businessName: data.business_name,
+      classes: data.classes,
+      pricing: data.pricing,
+      location: data.location,
+      welcomeMessage: data.welcome_message,
+      menuBody: data.menu_body,
+      menuFooter: data.menu_footer,
+      promoText: data.promo_text,
+    };
+    cacheTime = Date.now();
+    return cachedConfig;
+  } catch {
+    console.warn("[Chatbot] Failed to load config from DB, using defaults");
+    return DEFAULT_CONFIG;
+  }
+}
 
 // ─── Conversation State Machine ──────────────────────────────────────
 
@@ -119,21 +180,22 @@ export async function processMessage(
 ): Promise<BotResponse> {
   const text = message.trim();
   const conv = getConv(userId);
+  const cfg = await loadConfig();
 
   // Global commands
   if (text === "menu" || text === "תפריט" || text === "0") {
     setConv(userId, { state: "menu" });
-    return { messages: [buildMainMenu()] };
+    return { messages: [buildMainMenu(cfg)] };
   }
 
   // Route by state
   switch (conv.state) {
     case "idle":
-      return handleIdle(userId, text);
+      return handleIdle(userId, text, cfg);
     case "menu":
-      return handleMenuSelection(userId, text);
+      return handleMenuSelection(userId, text, cfg);
     case "class_info":
-      return handleClassInfo(userId, text);
+      return handleClassInfo(userId, text, cfg);
     case "collect_name":
       return handleCollectName(userId, text);
     case "collect_phone":
@@ -141,7 +203,7 @@ export async function processMessage(
     case "collect_child_age":
       return handleCollectChildAge(userId, text);
     case "collect_city":
-      return handleCollectCity(userId, text, platform);
+      return handleCollectCity(userId, text, platform, cfg);
     case "agent":
       return {
         messages: [{
@@ -151,33 +213,33 @@ export async function processMessage(
         }],
       };
     default:
-      return { messages: [buildMainMenu()] };
+      return { messages: [buildMainMenu(cfg)] };
   }
 }
 
 // ─── Idle / First Contact ────────────────────────────────────────────
 
-function handleIdle(userId: string, text: string): BotResponse {
+function handleIdle(userId: string, text: string, cfg: BotConfig): BotResponse {
   setConv(userId, { state: "menu" });
 
   return {
     messages: [
       {
         type: "text",
-        text: `שלום! 👋 ברוכים הבאים ל*${BOT_CONFIG.businessName}*!`,
+        text: cfg.welcomeMessage,
       },
-      buildMainMenu(),
+      buildMainMenu(cfg),
     ],
   };
 }
 
 // ─── Main Menu (Interactive List) ────────────────────────────────────
 
-function buildMainMenu(): WAListMessage {
+function buildMainMenu(cfg: BotConfig): WAListMessage {
   return {
     type: "list",
-    body: "איך אפשר לעזור? בחר מהתפריט 👇",
-    footer: "כושר וחינוך ילדים 🏋️",
+    body: cfg.menuBody,
+    footer: cfg.menuFooter,
     buttonText: "📋 תפריט ראשי",
     sections: [
       {
@@ -201,22 +263,18 @@ function buildMainMenu(): WAListMessage {
 
 // ─── Menu Selection Handler ──────────────────────────────────────────
 
-function handleMenuSelection(userId: string, text: string): BotResponse {
-  // Handle button/list callbacks AND free text
+function handleMenuSelection(userId: string, text: string, cfg: BotConfig): BotResponse {
   const selection = text.toLowerCase();
 
-  // Classes
   if (selection === "menu_classes" || selection === "1") {
     setConv(userId, { state: "class_info" });
-    return { messages: [buildClassesList()] };
+    return { messages: [buildClassesList(cfg)] };
   }
 
-  // Pricing
   if (selection === "menu_pricing" || selection === "2") {
-    return { messages: [buildPricingMessage()] };
+    return { messages: [buildPricingMessage(cfg)] };
   }
 
-  // Trial
   if (selection === "menu_trial" || selection === "3") {
     setConv(userId, { state: "collect_name" });
     return {
@@ -227,12 +285,10 @@ function handleMenuSelection(userId: string, text: string): BotResponse {
     };
   }
 
-  // Location
   if (selection === "menu_location" || selection === "4") {
-    return { messages: [buildLocationMessage()] };
+    return { messages: [buildLocationMessage(cfg)] };
   }
 
-  // Agent
   if (selection === "menu_agent" || selection === "5") {
     setConv(userId, { state: "agent" });
     return {
@@ -244,18 +300,15 @@ function handleMenuSelection(userId: string, text: string): BotResponse {
     };
   }
 
-  // Back to menu from buttons
   if (selection === "btn_menu") {
     setConv(userId, { state: "menu" });
-    return { messages: [buildMainMenu()] };
+    return { messages: [buildMainMenu(cfg)] };
   }
 
-  // Greeting
   if (/שלום|היי|הי|^hi$|^hello$|^start$/i.test(text)) {
-    return handleIdle(userId, text);
+    return handleIdle(userId, text, cfg);
   }
 
-  // Unknown
   return {
     messages: [{
       type: "button",
@@ -269,7 +322,7 @@ function handleMenuSelection(userId: string, text: string): BotResponse {
 
 // ─── Classes List ────────────────────────────────────────────────────
 
-function buildClassesList(): WAListMessage {
+function buildClassesList(cfg: BotConfig): WAListMessage {
   return {
     type: "list",
     body: "🏋️ *החוגים שלנו*\n\nכל החוגים כוללים:\n✅ מאמנים מוסמכים\n✅ קבוצות קטנות\n✅ שיעור ניסיון חינם\n\nבחר חוג לפרטים נוספים:",
@@ -278,7 +331,7 @@ function buildClassesList(): WAListMessage {
     sections: [
       {
         title: "החוגים",
-        rows: BOT_CONFIG.classes.map((c) => ({
+        rows: cfg.classes.map((c) => ({
           id: `class_${c.id}`,
           title: `${c.emoji} ${c.name}`,
           description: `גילאי ${c.ages}`,
@@ -288,11 +341,10 @@ function buildClassesList(): WAListMessage {
   };
 }
 
-function handleClassInfo(userId: string, text: string): BotResponse {
+function handleClassInfo(userId: string, text: string, cfg: BotConfig): BotResponse {
   const selection = text.toLowerCase();
 
-  // Check if user selected a specific class
-  const classMatch = BOT_CONFIG.classes.find(
+  const classMatch = cfg.classes.find(
     (c) => selection === `class_${c.id}` || selection === c.id
   );
 
@@ -301,7 +353,7 @@ function handleClassInfo(userId: string, text: string): BotResponse {
       messages: [{
         type: "button",
         body: `${classMatch.emoji} *${classMatch.name}*\n\nגילאי: ${classMatch.ages}\n\n📅 ימים: א׳, ג׳, ה׳\n🕐 שעות: לפי קבוצות גיל\n👥 קבוצות קטנות עד 12 ילדים\n🏆 מאמנים מוסמכים עם ניסיון\n\n✨ שיעור ניסיון ראשון — חינם!`,
-        footer: BOT_CONFIG.businessName,
+        footer: cfg.businessName,
         buttons: [
           { id: "menu_trial", title: "🎯 שיעור ניסיון" },
           { id: "menu_pricing", title: "💰 מחירון" },
@@ -311,24 +363,22 @@ function handleClassInfo(userId: string, text: string): BotResponse {
     };
   }
 
-  // Handle button callbacks from class detail view
   if (selection === "menu_trial" || selection === "menu_pricing" || selection === "btn_menu") {
     setConv(userId, { state: "menu" });
-    return handleMenuSelection(userId, text);
+    return handleMenuSelection(userId, text, cfg);
   }
 
-  // Back to class list
-  return { messages: [buildClassesList()] };
+  return { messages: [buildClassesList(cfg)] };
 }
 
 // ─── Pricing ─────────────────────────────────────────────────────────
 
-function buildPricingMessage(): WAButtonMessage {
-  const p = BOT_CONFIG.pricing;
+function buildPricingMessage(cfg: BotConfig): WAButtonMessage {
+  const p = cfg.pricing;
   return {
     type: "button",
-    body: `💰 *מחירון*\n\n📌 ${p.once.label} — ${p.once.price}\n📌 ${p.twice.label} — ${p.twice.price}\n📌 ${p.unlimited.label} — ${p.unlimited.price}\n\n🎁 *מבצע הצטרפות:*\nחודש ראשון ב-50% הנחה!`,
-    footer: BOT_CONFIG.businessName,
+    body: `💰 *מחירון*\n\n📌 ${p.once.label} — ${p.once.price}\n📌 ${p.twice.label} — ${p.twice.price}\n📌 ${p.unlimited.label} — ${p.unlimited.price}\n\n${cfg.promoText}`,
+    footer: cfg.businessName,
     buttons: [
       { id: "menu_trial", title: "🎯 שיעור ניסיון" },
       { id: "menu_classes", title: "🏋️ החוגים" },
@@ -339,12 +389,12 @@ function buildPricingMessage(): WAButtonMessage {
 
 // ─── Location ────────────────────────────────────────────────────────
 
-function buildLocationMessage(): WAButtonMessage {
-  const loc = BOT_CONFIG.location;
+function buildLocationMessage(cfg: BotConfig): WAButtonMessage {
+  const loc = cfg.location;
   return {
     type: "button",
     body: `📍 *מיקום ושעות פעילות*\n\n🏠 כתובת: ${loc.address}\n🕐 ${loc.hours}\n🚫 שבת: סגור\n\n🗺 ${loc.mapsLink}`,
-    footer: BOT_CONFIG.businessName,
+    footer: cfg.businessName,
     buttons: [
       { id: "menu_trial", title: "🎯 שיעור ניסיון" },
       { id: "btn_menu", title: "📋 תפריט ראשי" },
@@ -365,7 +415,6 @@ function handleCollectName(userId: string, text: string): BotResponse {
 }
 
 function handleCollectPhone(userId: string, text: string): BotResponse {
-  // Basic phone validation
   const cleaned = text.replace(/[\s\-()]/g, "");
   if (!/^(\+?972|0)\d{8,9}$/.test(cleaned) && !/^\d{9,10}$/.test(cleaned)) {
     return {
@@ -391,7 +440,6 @@ function handleCollectPhone(userId: string, text: string): BotResponse {
 }
 
 function handleCollectChildAge(userId: string, text: string): BotResponse {
-  // Accept button IDs or free text
   const ageMap: Record<string, string> = {
     age_5_7: "5-7",
     age_8_10: "8-10",
@@ -411,12 +459,12 @@ function handleCollectChildAge(userId: string, text: string): BotResponse {
 async function handleCollectCity(
   userId: string,
   text: string,
-  platform: string
+  platform: string,
+  cfg: BotConfig
 ): Promise<BotResponse> {
   const conv = getConv(userId);
   const data = { ...conv, city: text };
 
-  // Save lead to Supabase
   let leadSaved = false;
   try {
     const supabase = getServiceSupabase();
@@ -435,7 +483,6 @@ async function handleCollectCity(
     console.error("[Chatbot] Failed to save lead:", err);
   }
 
-  // Reset conversation
   setConv(userId, { state: "menu" });
 
   return {
@@ -460,6 +507,8 @@ async function handleCollectCity(
 
 // ─── Utility: Get Welcome Message ────────────────────────────────────
 
-export function getWelcomeMessage(): string {
-  return `שלום! 👋 ברוכים הבאים ל*${BOT_CONFIG.businessName}*!`;
+export async function getWelcomeMessage(): Promise<string> {
+  const cfg = await loadConfig();
+  return cfg.welcomeMessage;
 }
+
