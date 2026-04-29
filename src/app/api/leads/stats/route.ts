@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET /api/leads/stats — dashboard summary
+// GET /api/leads/stats â dashboard summary
 export async function GET() {
-  const { data: leads, error } = await supabase.from("leads").select("status, follow_up_date");
+  const { data: leads, error } = await supabase.from("leads").select("status, follow_up_date, source");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -23,6 +23,16 @@ export async function GET() {
 
   const active = total - (byStatus["closed"] || 0) - (byStatus["not_interested"] || 0);
 
+  const bySource = Object.entries(
+    (leads || []).reduce((acc, l) => {
+      const key = l.source || "unknown";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>)
+  ).map(([source, count]) => ({ source, count }));
+
+  const byStatusArr = Object.entries(byStatus).map(([status, count]) => ({ status, count }));
+
   return NextResponse.json({
     total,
     active,
@@ -30,5 +40,7 @@ export async function GET() {
     not_interested: byStatus["not_interested"] || 0,
     followUpsToday,
     byStatus,
+    bySource,
+    byStatusArr,
   });
 }
