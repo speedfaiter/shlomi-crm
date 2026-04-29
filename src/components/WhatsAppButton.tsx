@@ -58,17 +58,17 @@ export default function WhatsAppButton({ lead, onSent }: WhatsAppButtonProps) {
       <div className="flex">
         <button
           onClick={handleQuickSend}
-          className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2 py-1 rounded-r transition"
-          title="פתח WhatsApp עם הודעת ברכה"
+          className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2 py-1 rounded-l transition"
+          title="×¤×ª× WhatsApp ×¢× ××××¢×ª ××¨××"
         >
           WA
         </button>
         <button
           onClick={() => setOpen(true)}
-          className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-1 py-1 rounded-l border-r border-green-200 transition"
-          title="בחר תבנית הודעה"
+          className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-1 py-1 rounded-r border-l border-green-200 transition"
+          title="×××¨ ×ª×× ××ª ××××¢×"
         >
-          ▾
+          â¾
         </button>
       </div>
 
@@ -78,14 +78,14 @@ export default function WhatsAppButton({ lead, onSent }: WhatsAppButtonProps) {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-base font-semibold flex items-center gap-2">
-                <span className="text-green-600">◉</span>
-                שליחת WhatsApp ל{lead.name}
+                <span className="text-green-600">â</span>
+                ×©××××ª WhatsApp ×{lead.name}
               </h3>
               <button
                 onClick={() => setOpen(false)}
                 className="text-gray-400 hover:text-gray-600 text-xl"
               >
-                ✕
+                â
               </button>
             </div>
 
@@ -98,7 +98,7 @@ export default function WhatsAppButton({ lead, onSent }: WhatsAppButtonProps) {
                     !useCustom ? "bg-green-50 border-green-300 text-green-700" : "bg-white"
                   }`}
                 >
-                  תבנית מוכנה
+                  ×ª×× ××ª ×××× ×
                 </button>
                 <button
                   onClick={() => setUseCustom(true)}
@@ -106,14 +106,14 @@ export default function WhatsAppButton({ lead, onSent }: WhatsAppButtonProps) {
                     useCustom ? "bg-green-50 border-green-300 text-green-700" : "bg-white"
                   }`}
                 >
-                  הודעה חופשית
+                  ××××¢× ×××¤×©××ª
                 </button>
               </div>
 
               {!useCustom ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    בחר תבנית
+                    ×××¨ ×ª×× ××ª
                   </label>
                   <select
                     value={selectedTemplate}
@@ -130,21 +130,21 @@ export default function WhatsAppButton({ lead, onSent }: WhatsAppButtonProps) {
               ) : (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    הודעה חופשית
+                    ××××¢× ×××¤×©××ª
                   </label>
                   <textarea
                     value={customMessage}
                     onChange={(e) => setCustomMessage(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 text-sm"
                     rows={4}
-                    placeholder="כתוב הודעה..."
+                    placeholder="××ª×× ××××¢×..."
                   />
                 </div>
               )}
 
               {/* Preview */}
               <div>
-                <p className="text-xs text-gray-500 mb-1">תצוגה מקדימה:</p>
+                <p className="text-xs text-gray-500 mb-1">×ª×¦××× ××§××××:</p>
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm whitespace-pre-wrap text-gray-700 max-h-32 overflow-y-auto">
                   {messageText || "..."}
                 </div>
@@ -152,7 +152,7 @@ export default function WhatsAppButton({ lead, onSent }: WhatsAppButtonProps) {
 
               {/* Info */}
               <p className="text-xs text-gray-400">
-                מספר: {lead.phone} · ייפתח ישירות ב-WhatsApp
+                ××¡×¤×¨: {lead.phone} Â· ×××¤×ª× ××©××¨××ª ×-WhatsApp
               </p>
 
               {/* Actions */}
@@ -162,13 +162,13 @@ export default function WhatsAppButton({ lead, onSent }: WhatsAppButtonProps) {
                   disabled={useCustom && !customMessage.trim()}
                   className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  פתח ב-WhatsApp
+                  ×¤×ª× ×-WhatsApp
                 </button>
                 <button
                   onClick={() => setOpen(false)}
                   className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition text-sm"
                 >
-                  ביטול
+                  ×××××
                 </button>
               </div>
             </div>
