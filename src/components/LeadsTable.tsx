@@ -21,11 +21,11 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
   const [bulkStatus, setBulkStatus] = useState<string>("");
 
   if (leads.length === 0) {
-    return <p className="text-center text-gray-400 py-8">××× ××××× ×××¦××</p>;
+    return <p className="text-center text-gray-400 py-8">אין לידים להצגה</p>;
   }
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "â";
+    if (!dateStr) return "—";
     return new Date(dateStr).toLocaleDateString("he-IL");
   };
 
@@ -45,7 +45,7 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
 
   const sortIndicator = (key: SortKey) => {
     if (sortBy !== key) return "";
-    return sortOrder === "asc" ? " â²" : " â¼";
+    return sortOrder === "asc" ? " ▲" : " ▼";
   };
 
   const sorted = [...leads].sort((a, b) => {
@@ -82,10 +82,10 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
   };
 
   function exportCSV() {
-    const headers = ["×©×", "×××¤××", "×¢××¨", "××§××¨", "×¡××××¡", "×ª××¨××"];
+    const headers = ["שם", "טלפון", "עיר", "מקור", "סטטוס", "תאריך"];
     const rows = leads.map(l => [l.name, l.phone, l.city, l.source, l.status, l.created_at?.split("T")[0]]);
     const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
-    const blob = new Blob(["ï»¿" + csv], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -101,17 +101,17 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
           onClick={exportCSV}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
         >
-          ×××¦×× CSV
+          ייצוא CSV
         </button>
         {selected.size > 0 && (
           <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-            <span className="text-sm font-medium">{selected.size} × ×××¨×</span>
+            <span className="text-sm font-medium">{selected.size} נבחרו</span>
             <select
               value={bulkStatus}
               onChange={(e) => setBulkStatus(e.target.value)}
               className="border rounded px-2 py-1 text-sm"
             >
-              <option value="">×©× × ×¡××××¡...</option>
+              <option value="">שנה סטטוס...</option>
               {Object.entries(STATUS_LABELS).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
@@ -121,7 +121,7 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
               disabled={!bulkStatus}
               className="bg-blue-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
             >
-              ×××
+              החל
             </button>
           </div>
         )}
@@ -136,15 +136,15 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
                 onChange={toggleSelectAll}
               />
             </th>
-            <th className="text-right py-3 px-2 font-medium cursor-pointer select-none" onClick={() => handleSort("name")}>×©×{sortIndicator("name")}</th>
-            <th className="text-right py-3 px-2 font-medium cursor-pointer select-none" onClick={() => handleSort("phone")}>×××¤××{sortIndicator("phone")}</th>
-            <th className="text-right py-3 px-2 font-medium hidden md:table-cell cursor-pointer select-none" onClick={() => handleSort("city")}>×¢××¨{sortIndicator("city")}</th>
-            <th className="text-right py-3 px-2 font-medium hidden md:table-cell">××× ×××</th>
-            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell cursor-pointer select-none" onClick={() => handleSort("source")}>××§××¨{sortIndicator("source")}</th>
-            <th className="text-right py-3 px-2 font-medium cursor-pointer select-none" onClick={() => handleSort("status")}>×¡××××¡{sortIndicator("status")}</th>
-            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell">××¢×§×</th>
-            <th className="text-right py-3 px-2 font-medium hidden xl:table-cell">××¢×¨××ª</th>
-            <th className="text-right py-3 px-2 font-medium">×¤×¢××××ª</th>
+            <th className="text-right py-3 px-2 font-medium cursor-pointer select-none" onClick={() => handleSort("name")}>שם{sortIndicator("name")}</th>
+            <th className="text-right py-3 px-2 font-medium cursor-pointer select-none" onClick={() => handleSort("phone")}>טלפון{sortIndicator("phone")}</th>
+            <th className="text-right py-3 px-2 font-medium hidden md:table-cell cursor-pointer select-none" onClick={() => handleSort("city")}>עיר{sortIndicator("city")}</th>
+            <th className="text-right py-3 px-2 font-medium hidden md:table-cell">גיל ילד</th>
+            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell cursor-pointer select-none" onClick={() => handleSort("source")}>מקור{sortIndicator("source")}</th>
+            <th className="text-right py-3 px-2 font-medium cursor-pointer select-none" onClick={() => handleSort("status")}>סטטוס{sortIndicator("status")}</th>
+            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell">מעקב</th>
+            <th className="text-right py-3 px-2 font-medium hidden xl:table-cell">הערות</th>
+            <th className="text-right py-3 px-2 font-medium">פעולות</th>
           </tr>
         </thead>
         <tbody>
@@ -163,8 +163,8 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
                   {lead.phone}
                 </a>
               </td>
-              <td className="py-3 px-2 hidden md:table-cell">{lead.city || "â"}</td>
-              <td className="py-3 px-2 hidden md:table-cell">{lead.child_age || "â"}</td>
+              <td className="py-3 px-2 hidden md:table-cell">{lead.city || "—"}</td>
+              <td className="py-3 px-2 hidden md:table-cell">{lead.child_age || "—"}</td>
               <td className="py-3 px-2 hidden lg:table-cell">
                 {SOURCE_LABELS[lead.source] || lead.source}
               </td>
@@ -187,7 +187,7 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
                 </span>
               </td>
               <td className="py-3 px-2 hidden xl:table-cell max-w-[150px] truncate" title={lead.notes}>
-                {lead.notes || "â"}
+                {lead.notes || "—"}
               </td>
               <td className="py-3 px-2">
                 <div className="flex gap-1">
@@ -196,13 +196,13 @@ export default function LeadsTable({ leads, onEdit, onDelete, onStatusChange, on
                     onClick={() => onEdit(lead)}
                     className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition"
                   >
-                    ×¢×¨××
+                    ערוך
                   </button>
                   <button
                     onClick={() => onDelete(lead.id)}
                     className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded transition"
                   >
-                    ×××§
+                    מחק
                   </button>
                 </div>
               </td>
