@@ -9,18 +9,18 @@ export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
-    { href: "/", label: "×××××" },
-    { href: "/bot", label: "ð¤ ×¦×³×× ×××" },
-    { href: "/form", label: "ð ×××¤×¡ ×××××" },
+    { href: "/", label: "לידים" },
+    { href: "/bot", label: "🤖 צ׳אט בוט" },
+    { href: "/form", label: "📋 טופס לידים" },
   ];
 
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
-        <Link href="/" className="font-bold text-lg">ðï¸ CRM - × ×××× ×××××</Link>
+        <Link href="/" className="font-bold text-lg">🏋️ CRM - ניהול לידים</Link>
         {/* Mobile hamburger */}
         <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
-          <span className="text-xl">{menuOpen ? "â" : "â°"}</span>
+          <span className="text-xl">{menuOpen ? "✕" : "☰"}</span>
         </button>
         {/* Desktop nav */}
         <div className="hidden md:flex gap-4">
