@@ -41,10 +41,10 @@ export default function LeadForm() {
       if (res.ok) {
         setSubmitted(true);
       } else {
-        setError("×©×××× ××©××××, × ×¡× ×©××");
+        setError("שגיאה בשליחה, נסו שוב");
       }
     } catch {
-      setError("×©××××ª ×××××¨, × ×¡× ×©××");
+      setError("שגיאת חיבור, נסו שוב");
     } finally {
       setLoading(false);
     }
@@ -54,10 +54,10 @@ export default function LeadForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="text-5xl mb-4">ð</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">×ª××× ×¨××!</h2>
-          <p className="text-gray-600">×§×××× × ××ª ××¤×¨××× ×©×× ×× ××××¨ ×××× ×××§××.</p>
-          <p className="text-gray-500 text-sm mt-4">×¦×××ª ×××©×¨ ×××× ×× ××××× ðª</p>
+          <div className="text-5xl mb-4">🎉</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">תודה רבה!</h2>
+          <p className="text-gray-600">קיבלנו את הפרטים שלך ונחזור אליך בהקדם.</p>
+          <p className="text-gray-500 text-sm mt-4">צוות כושר וחינוך ילדים 💪</p>
         </div>
       </div>
     );
@@ -67,26 +67,26 @@ export default function LeadForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="text-4xl mb-2">ðï¸</div>
-          <h1 className="text-2xl font-bold text-gray-900">×××× ×××©×¨ ××××××</h1>
-          <p className="text-gray-500 mt-1">××©×××¨× ×¤×¨××× ×× ××××¨ ×××××!</p>
+          <div className="text-4xl mb-2">🏋️</div>
+          <h1 className="text-2xl font-bold text-gray-900">חוגי כושר לילדים</h1>
+          <p className="text-gray-500 mt-1">השאירו פרטים ונחזור אליכם!</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">×©× ××× *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא *</label>
             <input
               type="text"
               required
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              placeholder="××©×¨×× ××©×¨×××"
+              placeholder="ישראל ישראלי"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">×××¤×× *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">טלפון *</label>
             <input
               type="tel"
               required
@@ -99,18 +99,18 @@ export default function LeadForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">×¢××¨</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">עיר</label>
             <input
               type="text"
               value={form.city}
               onChange={(e) => update("city", e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              placeholder="×ª× ××××"
+              placeholder="תל אביב"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">××× ××××/×</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">גיל הילד/ה</label>
             <input
               type="number"
               min="1"
@@ -123,13 +123,13 @@ export default function LeadForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">××¢×¨××ª</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">הערות</label>
             <textarea
               value={form.notes}
               onChange={(e) => update("notes", e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
               rows={2}
-              placeholder="×©××××ª, ××¢××¤××ª..."
+              placeholder="שלות, העדפות..."
             />
           </div>
 
@@ -140,12 +140,12 @@ export default function LeadForm() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition text-sm font-medium disabled:opacity-50"
           >
-            {loading ? "×©×××..." : "×©××××ª ×¤×¨×××"}
+            {loading ? "שולח..." : "שליחת פרטים"}
           </button>
         </form>
 
         <p className="text-center text-xs text-gray-400 mt-4">
-          ××¤×¨××× ×©×× ×××××××× ××× ×××¢××¨× ××¦× ×©×××©×
+          הפרטים שלך מאובטחים ולא יועברו לצד שלישי
         </p>
       </div>
     </div>
