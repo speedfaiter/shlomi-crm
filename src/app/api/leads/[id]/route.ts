@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// PUT /api/leads/[id] — update a lead
+// PUT /api/leads/[id] â update a lead
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const body = await req.json();
 
+  // Filter out undefined values so partial updates don't overwrite existing fields
+  const cleanBody = Object.fromEntries(
+    Object.entries(body).filter(([_, v]) => v !== undefined)
+  );
+
   const { data, error } = await supabase
     .from("leads")
-    .update({
-      name: body.name,
-      phone: body.phone,
-      city: body.city,
-      child_age: body.child_age,
-      source: body.source,
-      status: body.status,
-      notes: body.notes,
-      follow_up_date: body.follow_up_date || null,
-    })
+    .update(cleanBody)
     .eq("id", params.id)
     .select()
     .single();
@@ -31,7 +27,7 @@ export async function PUT(
   return NextResponse.json(data);
 }
 
-// DELETE /api/leads/[id] — delete a lead
+// DELETE /api/leads/[id] â delete a lead
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
