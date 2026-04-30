@@ -1,7 +1,7 @@
 export default function PrivacyPolicy() {
       return (
               <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
-                        <h1>מדיניות פרטיות</h1>h1>
+                        <h1>מדיניות פרטיות</h1>
                     <p>עדכון אחרון: 30 באפריל 2026</p>p>
               
                     <h2>מבוא</h2>h2>
