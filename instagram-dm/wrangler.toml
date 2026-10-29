@@ -16,8 +16,8 @@ database_id = "REPLACE_WITH_D1_DATABASE_ID"
 GRAPH_VERSION = "v26.0"
 # כמה הודעות פרטיות לשלוח לכל היותר בשעה (שמרני, כדי לא להיתקע במגבלות של מטא)
 MAX_PER_HOUR = "150"
-BRAND_NAME = "REPLACE_WITH_BRAND_NAME"
-CONTACT_EMAIL = "REPLACE_WITH_CONTACT_EMAIL"
+BRAND_NAME = "שלומי חן מוביל ילדים להצלחה"
+CONTACT_EMAIL = "mastermbtm@gmail.com"
 
 # סודות (מוגדרים עם `npx wrangler secret put <NAME>`, לא כאן):
 #   IG_APP_ID        - Instagram app ID מהדשבורד של מטא
