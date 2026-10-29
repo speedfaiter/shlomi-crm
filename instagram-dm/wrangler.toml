@@ -9,7 +9,7 @@ crons = ["*/5 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "instagram-dm"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "4de607f3-ab64-4729-a347-d37cd8c0564a"
 
 [vars]
 # גרסת ה-API של מטא. לעדכן לגרסה העדכנית שמופיעה בהגדרות ה-Webhook
