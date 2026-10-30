@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS rules (
   button_text TEXT,         -- כפתור בהודעה (עד 20 תווים); NULL = בלי כפתור
   button_url TEXT,
   public_reply TEXT,        -- רק לתגובות: כמה נוסחים מופרדים בשורות; NULL = בלי תגובה פומבית
+  flow INTEGER NOT NULL DEFAULT 0, -- 1 = במקום הודעה אחת, מתחיל את שאלון הלידים
   active INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL
 );
@@ -35,3 +36,16 @@ CREATE TABLE IF NOT EXISTS sends (
 
 CREATE INDEX IF NOT EXISTS sends_status ON sends (status, created_at);
 CREATE INDEX IF NOT EXISTS sends_sent_at ON sends (sent_at);
+
+-- שאלון לידים: איפה כל אדם נמצא בשאלון ומה ענה
+CREATE TABLE IF NOT EXISTS leads (
+  user_id TEXT PRIMARY KEY,
+  username TEXT,
+  source TEXT,
+  step INTEGER NOT NULL DEFAULT 0,
+  answers TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL,     -- active / done
+  last_mid TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);

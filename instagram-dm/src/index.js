@@ -3,6 +3,7 @@ import * as meta from './meta.js';
 import { adminPage } from './admin.js';
 import { privacyPage, deletionPage } from './pages.js';
 import { esc } from './util.js';
+import * as flow from './flow.js';
 
 const HOUR = 3600;
 const TOKEN_REFRESH_AFTER = 20 * 24 * HOUR; // הטוקן תקף 60 יום; מחדשים כל 20
@@ -67,7 +68,6 @@ async function handleEvents(payload, env) {
   const s = await getSettings(env);
   if (!s.token) return;
   const { results: rules } = await env.DB.prepare('SELECT * FROM rules WHERE active = 1').all();
-  if (!rules.length) return;
 
   for (const entry of payload.entry || []) {
     for (const change of entry.changes || []) {
@@ -75,6 +75,10 @@ async function handleEvents(payload, env) {
       const v = change.value || {};
       if (!v.id || v.from?.id === s.ig_user_id) continue; // לא עונים לתגובות של עצמנו
       const rule = findRule(rules, 'comment', v.media?.id, v.text);
+      if (rule?.flow) {
+        await startFlow(env, s, { event_id: v.id, source: 'comment', rule, user_id: v.from?.id, username: v.from?.username || '', text: v.text });
+        continue;
+      }
       if (rule) await enqueue(env, {
         event_id: v.id, source: 'comment', rule, recipient_id: null,
         username: v.from?.username || '', text: v.text,
@@ -86,7 +90,12 @@ async function handleEvents(payload, env) {
       if (!msg?.mid || msg.is_echo || msg.is_deleted || !msg.text) continue;
       if (m.sender?.id === s.ig_user_id) continue;
       const source = msg.reply_to?.story ? 'story' : 'dm';
+      if (await continueFlow(env, s, m.sender.id, msg)) continue;
       const rule = findRule(rules, source, null, msg.text);
+      if (rule?.flow) {
+        await startFlow(env, s, { event_id: msg.mid, source, rule, user_id: m.sender.id, username: '', text: msg.text });
+        continue;
+      }
       if (rule) await enqueue(env, {
         event_id: msg.mid, source, rule, recipient_id: m.sender.id, username: '', text: msg.text,
       });
@@ -101,6 +110,67 @@ async function enqueue(env, e) {
     `INSERT OR IGNORE INTO sends (event_id, source, rule_id, recipient_id, username, incoming_text, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
   ).bind(e.event_id, e.source, e.rule.id, e.recipient_id, e.username, (e.text || '').slice(0, 500), now()).run();
+}
+
+// ---------- שאלון ----------
+
+const FLOW_TTL = 24 * HOUR; // אחרי יממה בלי תשובה השאלון נסגר (וגם מטא מרשה לענות רק 24 שעות)
+
+async function startFlow(env, s, e) {
+  if (!e.user_id) return;
+  // רושמים את האירוע; אם מטא שלחה אותו פעמיים, השאלון מתחיל פעם אחת
+  const ins = await env.DB.prepare(
+    `INSERT OR IGNORE INTO sends (event_id, source, rule_id, recipient_id, username, incoming_text, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'sending', ?)`,
+  ).bind(e.event_id, e.source, e.rule.id, e.user_id, e.username, (e.text || '').slice(0, 500), now()).run();
+  if (!ins.meta.changes) return;
+  const first = flow.stepMessage(0, {});
+  const text = `${flow.INTRO}\n\n${first.text}`;
+  try {
+    if (e.source === 'comment') {
+      // תשובה פרטית לתגובה: טקסט בלבד. השאלה הראשונה פתוחה, כך שלא צריך כפתורים
+      await meta.sendPrivateReply(env, s.token, s.ig_user_id, e.event_id, { text });
+      const pub = pickVariant(e.rule.public_reply);
+      if (pub) await meta.replyPublicly(env, s.token, e.event_id, fillTemplate(pub, { username: e.username })).catch(() => {});
+    } else {
+      await meta.sendMessage(env, s.token, s.ig_user_id, e.user_id, flow.quickReplyMessage({ ...first, text }));
+    }
+    await env.DB.prepare(
+      `INSERT INTO leads (user_id, username, source, step, answers, status, created_at, updated_at)
+       VALUES (?, ?, ?, 0, '{}', 'active', ?, ?)
+       ON CONFLICT(user_id) DO UPDATE SET username = excluded.username, source = excluded.source, step = 0,
+         answers = '{}', status = 'active', last_mid = NULL, created_at = excluded.created_at, updated_at = excluded.updated_at`,
+    ).bind(e.user_id, e.username, e.source, now(), now()).run();
+    await mark(env, { event_id: e.event_id, username: e.username }, 'sent');
+  } catch (err) {
+    await mark(env, { event_id: e.event_id, username: e.username, attempts: 1 }, 'failed', err.message);
+  }
+}
+
+// אם האדם באמצע שאלון, ההודעה שלו היא תשובה. מחזיר true אם טיפלנו בה
+async function continueFlow(env, s, userId, msg) {
+  const lead = await env.DB.prepare(`SELECT * FROM leads WHERE user_id = ? AND status = 'active'`).bind(userId).first();
+  if (!lead || now() - lead.updated_at > FLOW_TTL) return false;
+  if (lead.last_mid === msg.mid) return true; // אותה הודעה הגיעה פעמיים
+  const text = (msg.quick_reply?.payload || msg.text || '').trim();
+  const r = flow.answer(lead.step, JSON.parse(lead.answers || '{}'), text, s);
+  let username = lead.username;
+  if (!username) username = await meta.getUsername(env, s.token, userId).catch(() => '');
+  await env.DB.prepare(
+    `UPDATE leads SET step = ?, answers = ?, status = ?, last_mid = ?, username = ?, updated_at = ? WHERE user_id = ?`,
+  ).bind(r.step, JSON.stringify(r.answers), r.done ? 'done' : 'active', msg.mid, username, now(), userId).run();
+  const out = r.done
+    ? meta.buildMessage(r.final.text, r.final.button)
+    : flow.quickReplyMessage(flow.stepMessage(r.step, r.answers));
+  try {
+    await meta.sendMessage(env, s.token, s.ig_user_id, userId, out);
+  } catch (e) {
+    console.error('flow send', e.message);
+    if (r.done && r.final.button) {
+      await meta.sendMessage(env, s.token, s.ig_user_id, userId, { text: `${r.final.text}\n${r.final.button.url}` }).catch(() => {});
+    }
+  }
+  return true;
 }
 
 // ---------- שליחה ----------
@@ -177,7 +247,10 @@ function mark(env, row, status, error = null) {
 
 // מדיניות הפרטיות מבטיחה מחיקה אחרי 90 יום
 function purgeOld(env) {
-  return env.DB.prepare('DELETE FROM sends WHERE created_at < ?').bind(now() - 90 * 24 * HOUR).run();
+  return env.DB.batch([
+    env.DB.prepare('DELETE FROM sends WHERE created_at < ?').bind(now() - 90 * 24 * HOUR),
+    env.DB.prepare('DELETE FROM leads WHERE updated_at < ?').bind(now() - 90 * 24 * HOUR),
+  ]);
 }
 
 // ---------- טוקן וחיבור ----------
@@ -233,8 +306,9 @@ async function renderAdmin(url, env) {
   if (s.token) {
     try { media = await meta.listMedia(env, s.token); } catch (e) { mediaError = e.message; }
   }
+  const { results: leads } = await env.DB.prepare('SELECT * FROM leads ORDER BY updated_at DESC LIMIT 100').all();
   const sentByRule = Object.fromEntries(counts.results.map((r) => [r.rule_id, r.n]));
-  return html(adminPage({ s, rules, recent, sentByRule, pending, media, mediaError, msg: url.searchParams.get('msg'), env }));
+  return html(adminPage({ s, rules, recent, sentByRule, pending, media, mediaError, leads, msg: url.searchParams.get('msg'), env }));
 }
 
 async function adminAction(request, env) {
@@ -245,7 +319,7 @@ async function adminAction(request, env) {
   if (action === 'add') {
     const source = ['comment', 'story', 'dm'].includes(f.get('source')) ? f.get('source') : 'comment';
     const keyword = (f.get('keyword') || '').trim();
-    const message = (f.get('message') || '').trim();
+    const message = (f.get('message') || '').trim() || (f.get('flow') ? 'שאלון' : '');
     if (!keyword || !message) return back('missing');
     let mediaId = null, label = null, thumb = null;
     if (source === 'comment' && f.get('media')) {
@@ -255,10 +329,11 @@ async function adminAction(request, env) {
     const buttonUrl = (f.get('button_url') || '').trim() || null;
     const buttonText = buttonUrl ? (f.get('button_text') || '').trim() || 'לפתיחה' : null;
     if (buttonUrl && !/^https:\/\//.test(buttonUrl)) return back('badurl');
+    const startsFlow = f.get('flow') ? 1 : 0;
     await env.DB.prepare(
-      `INSERT INTO rules (source, keyword, media_id, media_label, media_thumb, message, public_reply, button_text, button_url, active, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
-    ).bind(source, keyword, mediaId, label, thumb, message, pub, buttonText, buttonUrl, now()).run();
+      `INSERT INTO rules (source, keyword, media_id, media_label, media_thumb, message, public_reply, button_text, button_url, flow, active, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+    ).bind(source, keyword, mediaId, label, thumb, message, pub, buttonText, buttonUrl, startsFlow, now()).run();
     return back('added');
   }
   const id = Number(f.get('id'));
@@ -268,6 +343,20 @@ async function adminAction(request, env) {
   }
   if (action === 'delete') {
     await env.DB.prepare('DELETE FROM rules WHERE id = ?').bind(id).run();
+    return back('deleted');
+  }
+  if (action === 'links') {
+    const links = {};
+    for (const k of ['pay_intro', 'pay_consult', 'online_url']) {
+      const v = (f.get(k) || '').trim();
+      if (v && !/^https:\/\//.test(v)) return back('badurl');
+      links[k] = v;
+    }
+    await setSettings(env, links);
+    return back('saved');
+  }
+  if (action === 'delete_lead') {
+    await env.DB.prepare('DELETE FROM leads WHERE user_id = ?').bind(f.get('user_id')).run();
     return back('deleted');
   }
   if (action === 'disconnect') {
