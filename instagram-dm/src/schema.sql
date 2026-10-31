@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS rules (
   button_text TEXT,         -- כפתור בהודעה (עד 20 תווים); NULL = בלי כפתור
   button_url TEXT,
   public_reply TEXT,        -- רק לתגובות: כמה נוסחים מופרדים בשורות; NULL = בלי תגובה פומבית
+  follow_gate INTEGER NOT NULL DEFAULT 0, -- 0 = לינק ישר, 1 = הודעה מקדימה, 2 = מקדימה + עוקבים בלבד
+  pre_text TEXT,
   flow INTEGER NOT NULL DEFAULT 0, -- 1 = במקום הודעה אחת, מתחיל את שאלון הלידים
   active INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL

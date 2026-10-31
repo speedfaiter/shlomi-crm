@@ -86,6 +86,10 @@ async function handleEvents(payload, env) {
     }
 
     for (const m of entry.messaging || []) {
+      if (m.postback?.payload) {
+        await handleGate(env, s, m.sender.id, m.postback.payload).catch((e) => console.error('gate', e.message));
+        continue;
+      }
       const msg = m.message;
       if (!msg?.mid || msg.is_echo || msg.is_deleted || !msg.text) continue;
       if (m.sender?.id === s.ig_user_id) continue;
@@ -173,6 +177,46 @@ async function continueFlow(env, s, userId, msg) {
   return true;
 }
 
+// ---------- הודעה מקדימה ועוקבים בלבד ----------
+
+const DEFAULT_PRE = 'היי {username}! 👋 ראיתי שביקשת את המדריך 🎁 לשלוח לך?';
+
+// במקום הלינק: הודעה מקדימה עם כפתור. הלינק יוצא רק אחרי הלחיצה
+function gateIntro(row, fallbackText) {
+  const pre = fillTemplate(row.pre_text || DEFAULT_PRE, { username: row.username || '' }).replace(/\s*@?\{username\}/g, '');
+  return meta.buttonsMessage(pre || fallbackText, [{ type: 'postback', title: 'ברור, שלח!', payload: `GATE:${row.rule_id}` }]);
+}
+
+async function handleGate(env, s, userId, payload) {
+  const [kind, id] = payload.split(':');
+  if (!['GATE', 'FOLLOWED'].includes(kind)) return;
+  const rule = await env.DB.prepare('SELECT * FROM rules WHERE id = ?').bind(Number(id)).first();
+  if (!rule) return;
+  const send = (msg) => meta.sendMessage(env, s.token, s.ig_user_id, userId, msg);
+  // אם אי אפשר לבדוק מול מטא (null), שולחים בכל מקרה
+  const follows = rule.follow_gate === 2 ? await meta.isFollower(env, s.token, userId) : true;
+  if (follows !== false) {
+    let username = '';
+    if (rule.message.includes('{username}')) username = await meta.getUsername(env, s.token, userId).catch(() => '');
+    const text = fillTemplate(rule.message, { username }).replace(/\s*@?\{username\}/g, '');
+    const button = rule.button_url ? { url: rule.button_url, title: rule.button_text } : null;
+    try {
+      await send(meta.buildMessage(text, button));
+    } catch (e) {
+      await send({ text: button ? `${text}\n${button.url}` : text });
+    }
+    return;
+  }
+  const profile = `https://www.instagram.com/${s.username}/`;
+  const text = kind === 'FOLLOWED'
+    ? 'עוד לא רואה שעקבת 🙂 לוחצים על "לפרופיל שלי", ואז "עקוב", וחוזרים לכאן ללחוץ "אני כבר עוקב/ת"'
+    : 'כמעט! 🙏 המדריך נשלח לעוקבים שלי. עוקבים ולוחצים "אני כבר עוקב/ת":';
+  await send(meta.buttonsMessage(text, [
+    { type: 'web_url', title: 'לפרופיל שלי', url: profile },
+    { type: 'postback', title: 'אני כבר עוקב/ת', payload: `FOLLOWED:${rule.id}` },
+  ]));
+}
+
 // ---------- שליחה ----------
 
 async function drainQueue(env, settings) {
@@ -188,7 +232,7 @@ async function drainQueue(env, settings) {
   if (room <= 0) return;
 
   const { results } = await env.DB.prepare(
-    `SELECT sends.*, rules.message, rules.public_reply, rules.button_text, rules.button_url FROM sends
+    `SELECT sends.*, rules.message, rules.public_reply, rules.button_text, rules.button_url, rules.follow_gate, rules.pre_text FROM sends
      LEFT JOIN rules ON rules.id = sends.rule_id
      WHERE sends.status = 'pending' ORDER BY sends.created_at LIMIT ?`,
   ).bind(room).all();
@@ -229,6 +273,13 @@ async function sendOne(env, s, row) {
 
 // אם מטא דוחה את הכפתור, שולחים טקסט רגיל עם הקישור בסוף כדי שהאדם יקבל את מה שביקש
 async function sendWithButton(row, text, send) {
+  if (row.follow_gate) {
+    try {
+      return await send(gateIntro(row, text));
+    } catch (e) {
+      console.error('gate intro failed, sending the link directly', e.message); // עדיף שיקבל את הלינק מאשר כלום
+    }
+  }
   const button = row.button_url ? { url: row.button_url, title: row.button_text } : null;
   try {
     await send(meta.buildMessage(text, button));
@@ -330,10 +381,13 @@ async function adminAction(request, env) {
     const buttonText = buttonUrl ? (f.get('button_text') || '').trim() || 'לפתיחה' : null;
     if (buttonUrl && !/^https:\/\//.test(buttonUrl)) return back('badurl');
     const startsFlow = f.get('flow') ? 1 : 0;
+    // 0 = הלינק ישר, 1 = הודעה מקדימה עם כפתור, 2 = הודעה מקדימה + עוקבים בלבד
+    const gate = f.get('followers') ? 2 : f.get('pre') ? 1 : 0;
+    const preText = (f.get('pre_text') || '').trim() || null;
     await env.DB.prepare(
-      `INSERT INTO rules (source, keyword, media_id, media_label, media_thumb, message, public_reply, button_text, button_url, flow, active, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
-    ).bind(source, keyword, mediaId, label, thumb, message, pub, buttonText, buttonUrl, startsFlow, now()).run();
+      `INSERT INTO rules (source, keyword, media_id, media_label, media_thumb, message, public_reply, button_text, button_url, flow, follow_gate, pre_text, active, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+    ).bind(source, keyword, mediaId, label, thumb, message, pub, buttonText, buttonUrl, startsFlow, gate, preText, now()).run();
     return back('added');
   }
   const id = Number(f.get('id'));

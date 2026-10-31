@@ -1,3 +1,9 @@
+-- מדריך ההתפרצויות: עוקבים בלבד, עם הודעה מקדימה. ראשון ברשימה כדי שיגבר על חוקים אחרים
+INSERT INTO rules (source, keyword, message, button_text, button_url, public_reply, follow_gate, pre_text, flow, active, created_at) VALUES ('comment', 'מדריך, המדריך, התפרצות, התפרצויות', 'הנה המדריך להתמודדות עם התפרצויות 🎁 מקווה שיעזור לכם, ואשמח לשמוע איך הלך 💪', 'למדריך 📖', 'https://claude.ai/artifact/C3yJsSLacgVUqVnSeyMSsP', 'שלחתי לך בפרטי 💌
+בדקו את ההודעות 😉
+המדריך מחכה לך בהודעות 🎁', 2, 'היי {username}! 👋 ראיתי שביקשת את המדריך להתמודדות עם התפרצויות 🎁 לשלוח לך?', 0, 1, 1793460317);
+INSERT INTO rules (source, keyword, message, button_text, button_url, public_reply, follow_gate, pre_text, flow, active, created_at) VALUES ('story', 'מדריך, המדריך, התפרצות, התפרצויות', 'הנה המדריך להתמודדות עם התפרצויות 🎁 מקווה שיעזור לכם, ואשמח לשמוע איך הלך 💪', 'למדריך 📖', 'https://claude.ai/artifact/C3yJsSLacgVUqVnSeyMSsP', NULL, 2, 'היי {username}! 👋 ראיתי שביקשת את המדריך להתמודדות עם התפרצויות 🎁 לשלוח לך?', 0, 1, 1793460317);
+INSERT INTO rules (source, keyword, message, button_text, button_url, public_reply, follow_gate, pre_text, flow, active, created_at) VALUES ('dm', 'מדריך, המדריך, התפרצות, התפרצויות', 'הנה המדריך להתמודדות עם התפרצויות 🎁 מקווה שיעזור לכם, ואשמח לשמוע איך הלך 💪', 'למדריך 📖', 'https://claude.ai/artifact/C3yJsSLacgVUqVnSeyMSsP', NULL, 2, 'היי {username}! 👋 ראיתי שביקשת את המדריך להתמודדות עם התפרצויות 🎁 לשלוח לך?', 0, 1, 1793460317);
 -- חוקים התחלתיים: מילים ישירות (מתכון, לחם, סדנה) ושאלון הלידים, בתגובות, בסטורי ובהודעות
 INSERT INTO rules (source, keyword, message, button_text, button_url, public_reply, flow, active, created_at) VALUES ('comment', 'מתכון, מתכונים, המתכון', 'היי {username}! 🍳 הנה כל המתכונים הבריאים מ"במטבח של שלומי וזינגי", בלי טיגון ובלי חומרים משמרים. בתיאבון!', 'למתכונים', 'https://shlomichen-mbtm.netlify.app/recipes/', 'שלחתי לך בפרטי 💌
 בדקו את ההודעות 😉

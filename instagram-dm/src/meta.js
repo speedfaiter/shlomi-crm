@@ -114,6 +114,32 @@ export async function sendMessage(env, token, igUserId, recipientId, message) {
   });
 }
 
+// האם האדם עוקב אחרי החשבון. null = מטא לא החזירה תשובה (ואז שולחים בכל מקרה)
+export async function isFollower(env, token, igsid) {
+  try {
+    const p = new URLSearchParams({ fields: 'is_user_follow_business', access_token: token });
+    const res = await call(graph(env, `/${igsid}?${p}`));
+    return typeof res.is_user_follow_business === 'boolean' ? res.is_user_follow_business : null;
+  } catch (e) {
+    console.error('follow check', e.message);
+    return null;
+  }
+}
+
+// הודעה עם כפתורים: { type: 'postback', title, payload } או { type: 'web_url', title, url }
+export function buttonsMessage(text, buttons) {
+  return {
+    attachment: {
+      type: 'template',
+      payload: {
+        template_type: 'button',
+        text: text.slice(0, 640),
+        buttons: buttons.map((b) => ({ ...b, title: b.title.slice(0, 20) })),
+      },
+    },
+  };
+}
+
 export async function getUsername(env, token, igsid) {
   const p = new URLSearchParams({ fields: 'username', access_token: token });
   const res = await call(graph(env, `/${igsid}?${p}`));

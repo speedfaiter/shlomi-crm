@@ -142,6 +142,10 @@ export function adminPage({ s, rules, recent, sentByRule, pending, media, mediaE
       </div>
       </div>
 
+      <label class="check"><input type="checkbox" name="pre" value="1"> הודעה מקדימה עם כפתור "ברור, שלח!" <span class="hint">(הלינק יוצא רק אחרי הלחיצה)</span></label>
+      <input type="text" name="pre_text" placeholder="היי {username}! 👋 ראיתי שביקשת את המדריך 🎁 לשלוח לך?">
+      <label class="check"><input type="checkbox" name="followers" value="1"> לעוקבים בלבד <span class="hint">(מי שלא עוקב מקבל כפתור לפרופיל ו"אני כבר עוקב/ת". אם מטא לא עונה, הלינק נשלח בכל מקרה)</span></label>
+
       <div data-only="comment">
         <label for="public_reply">תגובה פומבית מתחת לתגובה שלו <span class="hint">(לא חובה. כמה נוסחים, אחד בכל שורה, ונבחר אחד באקראי)</span></label>
         <textarea id="public_reply" name="public_reply" placeholder="שלחתי לך בפרטי 💌&#10;בדוק/י את ההודעות 😉"></textarea>
@@ -160,6 +164,7 @@ export function adminPage({ s, rules, recent, sentByRule, pending, media, mediaE
           <div><span class="kw">${esc(r.keyword)}</span> · <span class="hint">${SOURCE_LABEL[r.source] || ''}${r.source === 'comment' ? (r.media_id ? ` · ${esc(r.media_label || 'ריל ספציפי')}` : ' · כל הפוסטים') : ''}</span></div>
           <div class="msg">${r.flow ? '📋 מתחיל את שאלון הלידים' : esc(r.message)}</div>
           ${r.button_url ? `<div class="hint">כפתור: <strong>${esc(r.button_text)}</strong> ← <bdi dir="ltr">${esc(r.button_url)}</bdi></div>` : ''}
+          ${r.follow_gate ? `<div class="hint">${r.follow_gate === 2 ? '👥 עוקבים בלבד, עם הודעה מקדימה' : '✋ הודעה מקדימה עם כפתור'}</div>` : ''}
           <div class="hint">נשלחו: ${sentByRule[r.id] || 0}${r.active ? '' : ' · כבוי'}</div>
         </div>
         <div class="actions">
