@@ -1,7 +1,5 @@
 -- הרצה חד-פעמית על מסד קיים: מוסיף את שאלון הלידים
 ALTER TABLE rules ADD COLUMN flow INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE rules ADD COLUMN follow_gate INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE rules ADD COLUMN pre_text TEXT;
 CREATE TABLE IF NOT EXISTS leads (
   user_id TEXT PRIMARY KEY,
   username TEXT,
