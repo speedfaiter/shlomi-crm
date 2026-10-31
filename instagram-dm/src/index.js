@@ -65,8 +65,10 @@ async function receiveWebhook(request, env, ctx) {
 }
 
 async function handleEvents(payload, env) {
+  // רישום קצר של כל אירוע, כדי שאפשר יהיה לראות ב-wrangler tail מה מגיע
+  console.log('webhook', JSON.stringify(payload).slice(0, 800));
   const s = await getSettings(env);
-  if (!s.token) return;
+  if (!s.token) return console.log('no token');
   const { results: rules } = await env.DB.prepare('SELECT * FROM rules WHERE active = 1').all();
 
   for (const entry of payload.entry || []) {
@@ -75,6 +77,7 @@ async function handleEvents(payload, env) {
       const v = change.value || {};
       if (!v.id || v.from?.id === s.ig_user_id) continue; // לא עונים לתגובות של עצמנו
       const rule = findRule(rules, 'comment', v.media?.id, v.text);
+      console.log('comment', JSON.stringify(v.text), rule ? `rule ${rule.id}` : `no rule (of ${rules.length})`);
       if (rule?.flow) {
         await startFlow(env, s, { event_id: v.id, source: 'comment', rule, user_id: v.from?.id, username: v.from?.username || '', text: v.text });
         continue;
