@@ -57,8 +57,16 @@ function verifyWebhook(url, env) {
 
 async function receiveWebhook(request, env, ctx) {
   const raw = await request.text();
-  const valid = await meta.verifySignature(env.IG_APP_SECRET, raw, request.headers.get('X-Hub-Signature-256'));
-  if (!valid) return new Response('bad signature', { status: 401 });
+  // מטא חותמת לפעמים עם ה-App secret של האפליקציה (Basic) ולא עם ה-Instagram app secret, אז בודקים את שניהם
+  const sig = request.headers.get('X-Hub-Signature-256');
+  let valid = false;
+  for (const secret of [env.IG_APP_SECRET, env.META_APP_SECRET]) {
+    if (secret && await meta.verifySignature(secret, raw, sig)) { valid = true; break; }
+  }
+  if (!valid) {
+    console.log('bad signature: check IG_APP_SECRET / META_APP_SECRET');
+    return new Response('bad signature', { status: 401 });
+  }
   // עונים למטא מיד, והעבודה ממשיכה ברקע
   ctx.waitUntil(handleEvents(JSON.parse(raw), env).catch((e) => console.error('webhook', e)));
   return new Response('ok');

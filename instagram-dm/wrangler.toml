@@ -24,3 +24,4 @@ CONTACT_EMAIL = "mastermbtm@gmail.com"
 #   IG_APP_SECRET    - Instagram app secret
 #   VERIFY_TOKEN     - מחרוזת אקראית שמדביקים גם בהגדרות ה-Webhook במטא
 #   ADMIN_PASSWORD   - הסיסמה לדף הניהול
+#   META_APP_SECRET  - (לא חובה) App secret מ-App settings ← Basic, אם מטא חותמת איתו את ה-webhooks
